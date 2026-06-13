@@ -1,0 +1,23 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// One protein scan. We store the derived estimate, never the raw photo.
+model Scan {
+  id           String   @id @default(cuid())
+  createdAt    DateTime @default(now())
+  totalProtein Int      @default(0)
+  items        Json
+  verdict      String
+  summary      String
+  confidence   String   @default("low")
+  email        String?
+  sessionId    String?
+
+  @@index([createdAt])
+}

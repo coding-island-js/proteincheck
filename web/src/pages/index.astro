@@ -212,26 +212,23 @@ const jsonLd = JSON.stringify({
 
     // Cycle through real pipeline steps, then keep rotating reassurance lines so
     // the user always sees the text change — clear signal it hasn't hung.
-    const STEPS = ['Looking at your plate…', 'Identifying each item…', 'Estimating protein…', 'Checking leucine…'];
+    // Honest captions: the analysis is a single AI call, so we state what's truly
+    // happening ("Analyzing…") and rotate honest "still working" lines for longer
+    // waits — no fake per-step progress. The moving bar shows it isn't hung.
+    const STEPS = ['Analyzing your meal…'];
     const SLOW = [
-      'Sizing up the portions…',
+      'Still analyzing…',
+      'Reading the photo carefully…',
+      'Working on the estimate…',
+      'Taking a closer look…',
       'Crunching the numbers…',
-      'Spotting hidden protein…',
-      'Tallying the leucine…',
-      'Weighing each item…',
-      'Double-checking the protein…',
-      'Comparing to the leucine threshold…',
-      'Doing the math…',
-      'Inspecting the details…',
-      'Adding it all up…',
-      'Reading the fine print…',
+      'Sizing up the portions…',
+      'Putting it all together…',
+      'Just a few more seconds…',
       'Almost there…',
-      'Just a moment more…',
-      'Plating up your results…',
-      'Finishing the breakdown…',
       'Hang tight, still working…',
+      'Wrapping up the numbers…',
       'Nearly done…',
-      'Almost ready to serve…',
     ];
     function startSteps() {
       const el = $('loadStep');

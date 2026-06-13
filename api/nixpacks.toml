@@ -1,0 +1,4 @@
+# Use `npm install` (not `npm ci`): the lockfile is generated on Windows and can
+# miss Linux-only optional deps, which makes `npm ci` fail on Railway's builders.
+[phases.install]
+cmds = ["npm install"]

@@ -61,9 +61,14 @@ const jsonLd = JSON.stringify({
       <div id="loading" class="loading" hidden>
         <div class="thumb-wrap">
           <img id="loadingImg" class="thumb-big" alt="The meal photo you uploaded" />
-          <div class="scrim"><span class="spinner" aria-hidden="true"></span></div>
+          <div class="scrim">
+            <span class="loader-chip">
+              <span class="spinner" aria-hidden="true"></span>
+              <span id="loadStep" class="load-step" role="status" aria-live="polite">Looking at your plate…</span>
+            </span>
+          </div>
         </div>
-        <p class="status" role="status" aria-live="polite">Counting your protein…</p>
+        <div class="bar" aria-hidden="true"><span class="bar-fill"></span></div>
       </div>
 
       <!-- STATE 3: result -->
@@ -205,6 +210,40 @@ const jsonLd = JSON.stringify({
       result.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
     }
 
+    // Cycle through real pipeline steps, then keep rotating reassurance lines so
+    // the user always sees the text change — clear signal it hasn't hung.
+    const STEPS = ['Looking at your plate…', 'Identifying each item…', 'Estimating protein…', 'Checking leucine…'];
+    const SLOW = [
+      'Sizing up the portions…',
+      'Crunching the numbers…',
+      'Spotting hidden protein…',
+      'Tallying the leucine…',
+      'Weighing each item…',
+      'Double-checking the protein…',
+      'Comparing to the leucine threshold…',
+      'Doing the math…',
+      'Inspecting the details…',
+      'Adding it all up…',
+      'Reading the fine print…',
+      'Almost there…',
+      'Just a moment more…',
+      'Plating up your results…',
+      'Finishing the breakdown…',
+      'Hang tight, still working…',
+      'Nearly done…',
+      'Almost ready to serve…',
+    ];
+    function startSteps() {
+      const el = $('loadStep');
+      let i = 0;
+      el.textContent = STEPS[0];
+      const t = setInterval(() => {
+        i++;
+        el.textContent = i < STEPS.length ? STEPS[i] : SLOW[(i - STEPS.length) % SLOW.length];
+      }, 1200);
+      return () => clearInterval(t);
+    }
+
     async function handleFile(f) {
       if (!f) return;
       let dataUrl;
@@ -218,17 +257,26 @@ const jsonLd = JSON.stringify({
       $('loadingImg').src = dataUrl;
       $('resultImg').src = dataUrl;
       show(loading);
+      const stopSteps = startSteps();
+      const ctrl = new AbortController();
+      const timeout = setTimeout(() => ctrl.abort(), 30000);
       try {
         const r = await fetch(API, {
           method: 'POST',
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({ image: dataUrl }),
+          signal: ctrl.signal,
         });
         if (!r.ok) throw new Error('Server ' + r.status);
         renderResult(await r.json());
       } catch (e) {
-        $('errorMsg').textContent = 'Something went wrong reading that photo. Please try again.';
+        $('errorMsg').textContent = e && e.name === 'AbortError'
+          ? 'That took longer than expected. Please try again.'
+          : 'Something went wrong reading that photo. Please try again.';
         show(errorBox);
+      } finally {
+        clearTimeout(timeout);
+        stopSteps();
       }
     }
 
@@ -309,10 +357,14 @@ const jsonLd = JSON.stringify({
     .loading { text-align:center; }
     .thumb-wrap { position:relative; display:inline-block; border-radius:var(--radius); overflow:hidden; max-width:100%; }
     .thumb-big { display:block; max-height:300px; max-width:100%; }
-    .scrim { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(246,247,245,.55); }
-    .spinner { width:38px; height:38px; border:4px solid color-mix(in srgb, var(--accent) 25%, transparent); border-top-color:var(--accent); border-radius:50%; animation:spin .8s linear infinite; }
+    .scrim { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(22,32,27,.28); backdrop-filter:blur(3px); -webkit-backdrop-filter:blur(3px); }
+    .loader-chip { display:inline-flex; align-items:center; gap:10px; background:rgba(255,255,255,.94); border-radius:999px; padding:9px 16px 9px 11px; box-shadow:0 6px 20px rgba(16,40,28,.18); max-width:90%; }
+    .load-step { font-size:14px; font-weight:700; color:var(--ink); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .spinner { width:20px; height:20px; flex:none; border:3px solid color-mix(in srgb, var(--accent) 22%, transparent); border-top-color:var(--accent); border-radius:50%; animation:spin .8s linear infinite; }
     @keyframes spin { to { transform:rotate(360deg); } }
-    .status { color:var(--ink-soft); font-weight:600; margin:14px 0 0; }
+    .bar { height:5px; background:var(--line-soft); border-radius:999px; margin:16px auto 0; max-width:240px; overflow:hidden; position:relative; }
+    .bar-fill { position:absolute; top:0; left:-45%; height:100%; width:40%; background:var(--accent); border-radius:999px; animation:slide 1.15s ease-in-out infinite; }
+    @keyframes slide { to { left:105%; } }
 
     /* result */
     .result-head { display:flex; align-items:center; gap:14px; margin-bottom:16px; }

@@ -1,153 +1,369 @@
 ---
+import Layout from '../layouts/Layout.astro';
 const API = import.meta.env.PUBLIC_API_URL
   ? `${import.meta.env.PUBLIC_API_URL}/analyze`
   : '/.netlify/functions/analyze';
+const SUBSCRIBE = import.meta.env.PUBLIC_API_URL
+  ? `${import.meta.env.PUBLIC_API_URL}/subscribe`
+  : '';
+const jsonLd = JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'WebApplication',
+  name: 'Protein Check',
+  applicationCategory: 'HealthApplication',
+  operatingSystem: 'Web',
+  description:
+    'Snap a photo of your meal and get an instant protein estimate, total leucine, and a per-item breakdown.',
+  url: 'https://proteincheck.withmagic.ai',
+  offers: { '@type': 'Offer', price: '0', priceCurrency: 'USD' },
+});
 ---
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Protein Check — how much protein is in your meal?</title>
-    <meta name="description" content="Snap a photo of your meal and get an instant protein estimate with a per-item breakdown." />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-  </head>
-  <body>
-    <main>
-      <header class="hero">
-        <h1>Protein Check</h1>
-        <p class="sub">Snap a photo of your meal. Get an instant protein estimate with a per-item breakdown.</p>
-      </header>
+<Layout
+  title="Protein Check — protein & leucine from a meal photo"
+  description="Snap a photo of your meal and get an instant protein estimate, total leucine (the muscle-building amino acid), and a per-item breakdown. Free, no signup."
+  canonical="/"
+  jsonLd={jsonLd}
+>
+  <main id="main">
+    <header class="hero">
+      <span class="kicker">Free AI meal analysis</span>
+      <h1>How much protein<br /><em>and leucine</em> is on your plate?</h1>
+      <p class="sub">Snap your meal. Get the protein, the leucine, and a per-item breakdown in seconds. No signup, no calorie spreadsheet.</p>
+    </header>
 
-      <section class="card" aria-label="Protein check">
-        <label class="drop" id="drop">
-          <input id="file" type="file" accept="image/*" capture="environment" hidden />
-          <span class="drop-inner">
-            <span class="cam" aria-hidden="true">🍽️</span>
-            <span class="drop-text">Take or upload a meal photo</span>
-            <span class="drop-hint">Plate, bowl, snack — anything</span>
+    <section class="card" aria-label="Protein check tool">
+      <!-- STATE 1: intake -->
+      <div id="intake" class="intake">
+        <label class="drop" id="drop" for="fileInput">
+          <span class="drop-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3.5"/></svg>
           </span>
+          <span class="drop-text">Add a meal photo</span>
+          <span class="drop-hint" id="dropHint">Drag &amp; drop, or choose a file</span>
         </label>
 
-        <div id="preview-wrap" hidden>
-          <img id="preview" alt="Your meal photo" />
-          <button id="again" class="ghost" type="button">Use a different photo</button>
+        <div class="actions">
+          <button id="btnCamera" class="btn primary" type="button" hidden>
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3.5"/></svg>
+            Take photo
+          </button>
+          <button id="btnUpload" class="btn" type="button">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M12 3v13"/><path d="m7 8 5-5 5 5"/></svg>
+            <span id="uploadLabel">Upload photo</span>
+          </button>
         </div>
 
-        <div id="status" class="status" role="status" aria-live="polite"></div>
+        <input id="camInput" type="file" accept="image/*" capture="environment" hidden />
+        <input id="fileInput" type="file" accept="image/*" hidden />
+      </div>
 
-        <div id="result" class="result" hidden aria-live="polite">
-          <div class="total">
-            <span class="grams" id="grams">–</span>
-            <span class="unit">g protein</span>
-          </div>
+      <!-- STATE 2: loading -->
+      <div id="loading" class="loading" hidden>
+        <div class="thumb-wrap">
+          <img id="loadingImg" class="thumb-big" alt="The meal photo you uploaded" />
+          <div class="scrim"><span class="spinner" aria-hidden="true"></span></div>
+        </div>
+        <p class="status" role="status" aria-live="polite">Counting your protein…</p>
+      </div>
+
+      <!-- STATE 3: result -->
+      <div id="result" class="result" hidden aria-live="polite">
+        <div class="result-head">
+          <img id="resultImg" class="thumb-sm" alt="The meal you analyzed" />
           <p class="verdict" id="verdict"></p>
-          <ul class="items" id="items"></ul>
-          <p class="summary" id="summary"></p>
-          <p class="conf" id="conf"></p>
         </div>
-      </section>
 
-      <footer class="foot">
-        <p>Estimates only — your photo is analyzed and discarded, never stored. Built with Astro + a typed NestJS API + Gemini vision.</p>
-      </footer>
-    </main>
+        <div class="stats">
+          <div class="stat protein">
+            <span class="stat-num"><span id="grams">–</span><span class="stat-unit">g</span></span>
+            <span class="stat-label">protein</span>
+          </div>
+          <div class="stat leucine">
+            <span class="stat-num"><span id="leucine">–</span><span class="stat-unit">g</span></span>
+            <span class="stat-label">leucine</span>
+            <span class="stat-cap">muscle-growth trigger</span>
+          </div>
+        </div>
 
-    <script define:vars={{ API }}>
-      const $ = (id) => document.getElementById(id);
-      const file = $('file'), drop = $('drop'), status = $('status'), result = $('result');
+        <p id="threshold" class="threshold" hidden></p>
 
-      async function downscale(fileObj, max = 1024) {
-        const url = URL.createObjectURL(fileObj);
-        const img = await new Promise((res, rej) => {
-          const i = new Image();
-          i.onload = () => res(i); i.onerror = rej; i.src = url;
+        <ul class="items" id="items"></ul>
+        <p class="summary" id="summary"></p>
+        <p class="conf" id="conf"></p>
+
+        <button id="again" class="btn primary wide" type="button">Scan another meal</button>
+
+        <form id="subscribe" class="subscribe" hidden>
+          <p class="sub-pitch">Coming soon: meal history &amp; PDF export. Want a heads-up?</p>
+          <div class="sub-row">
+            <input id="subEmail" type="email" inputmode="email" autocomplete="email" placeholder="you@email.com" aria-label="Email for product updates" required />
+            <button class="btn primary" type="submit">Notify me</button>
+          </div>
+          <p id="subMsg" class="sub-msg" role="status" aria-live="polite"></p>
+        </form>
+      </div>
+
+      <!-- error -->
+      <div id="error" class="errorbox" hidden role="alert" aria-live="assertive">
+        <p id="errorMsg">Something went wrong reading that photo.</p>
+        <button id="retry" class="btn primary" type="button">Try again</button>
+      </div>
+    </section>
+
+    <section id="how" class="how" aria-label="How it works">
+      <h2>How it works</h2>
+      <ol class="steps">
+        <li><span class="step-n">1</span><strong>Snap your plate</strong><p>Any meal, any angle.</p></li>
+        <li><span class="step-n">2</span><strong>AI reads it</strong><p>Protein &amp; leucine, per item.</p></li>
+        <li><span class="step-n">3</span><strong>See the breakdown</strong><p>Totals, then details. Nothing stored.</p></li>
+      </ol>
+      <p class="why"><strong>Why leucine?</strong> It's the trigger for muscle growth — it flips on the mTOR pathway, and most trackers bury it. Aim for <strong>~2.5–3g a meal</strong> (about 20–30g of quality protein). Leucine pulls the trigger; the other essential amino acids do the building.</p>
+    </section>
+  </main>
+
+  <script define:vars={{ API, SUBSCRIBE }}>
+    const $ = (id) => document.getElementById(id);
+    const intake = $('intake'), loading = $('loading'), result = $('result'), errorBox = $('error');
+    const camInput = $('camInput'), fileInput = $('fileInput');
+    const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const isMobile =
+      window.matchMedia('(hover: none) and (pointer: coarse)').matches ||
+      /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+    if (isMobile) {
+      $('btnCamera').hidden = false;
+      $('uploadLabel').textContent = 'Upload photo';
+      $('dropHint').textContent = 'Take a new photo or pick one from your library';
+    } else {
+      $('uploadLabel').textContent = 'Upload a photo';
+      $('dropHint').textContent = 'Drag & drop, or upload a photo';
+    }
+
+    // Email capture only works against the real API (not the function-only fallback).
+    if (SUBSCRIBE) $('subscribe').hidden = false;
+
+    function show(state) {
+      for (const el of [intake, loading, result, errorBox]) el.hidden = el !== state;
+    }
+
+    async function downscale(fileObj, max = 1024) {
+      const url = URL.createObjectURL(fileObj);
+      const img = await new Promise((res, rej) => {
+        const i = new Image();
+        i.onload = () => res(i); i.onerror = rej; i.src = url;
+      });
+      const scale = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width * scale);
+      c.height = Math.round(img.height * scale);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      URL.revokeObjectURL(url);
+      return c.toDataURL('image/jpeg', 0.85);
+    }
+
+    function round1(n) { return (Math.round((n ?? 0) * 10) / 10).toFixed(1); }
+
+    function renderResult(d) {
+      const leu = Number(d.totalLeucine ?? 0);
+      $('grams').textContent = Math.round(d.totalProtein ?? 0);
+      $('leucine').textContent = round1(leu);
+      $('verdict').textContent = d.verdict || '';
+      $('items').innerHTML = (d.items || [])
+        .map((it) => {
+          const l = it.leucine != null ? `<span class="il">${round1(it.leucine)}g leucine</span>` : '';
+          return `<li><span class="in">${it.name}</span><span class="iv"><span class="ip">${Math.round(it.protein)}g</span>${l}</span></li>`;
+        })
+        .join('');
+      $('summary').textContent = d.summary || '';
+      $('conf').textContent = d.confidence ? `Confidence: ${d.confidence}` : '';
+
+      const th = $('threshold');
+      if ((d.totalProtein ?? 0) > 0) {
+        const hit = leu >= 2.5;
+        th.textContent = hit
+          ? `Hits the ~2.5g leucine threshold for muscle growth`
+          : `Below the ~2.5g leucine threshold — add a complete protein`;
+        th.className = 'threshold ' + (hit ? 'hit' : 'miss');
+        th.hidden = false;
+      } else {
+        th.hidden = true;
+      }
+
+      show(result);
+      result.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'start' });
+    }
+
+    async function handleFile(f) {
+      if (!f) return;
+      let dataUrl;
+      try {
+        dataUrl = await downscale(f);
+      } catch {
+        $('errorMsg').textContent = "That file doesn't look like a photo. Pick an image and try again.";
+        show(errorBox);
+        return;
+      }
+      $('loadingImg').src = dataUrl;
+      $('resultImg').src = dataUrl;
+      show(loading);
+      try {
+        const r = await fetch(API, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ image: dataUrl }),
         });
-        const scale = Math.min(1, max / Math.max(img.width, img.height));
-        const c = document.createElement('canvas');
-        c.width = Math.round(img.width * scale);
-        c.height = Math.round(img.height * scale);
-        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-        URL.revokeObjectURL(url);
-        return c.toDataURL('image/jpeg', 0.85);
+        if (!r.ok) throw new Error('Server ' + r.status);
+        renderResult(await r.json());
+      } catch (e) {
+        $('errorMsg').textContent = 'Something went wrong reading that photo. Please try again.';
+        show(errorBox);
       }
+    }
 
-      function showResult(d) {
-        $('grams').textContent = Math.round(d.totalProtein ?? 0);
-        $('verdict').textContent = d.verdict || '';
-        $('items').innerHTML = (d.items || [])
-          .map((it) => `<li><span>${it.name}</span><span class="ig">${Math.round(it.protein)}g</span></li>`)
-          .join('');
-        $('summary').textContent = d.summary || '';
-        $('conf').textContent = d.confidence ? `Confidence: ${d.confidence}` : '';
-        result.hidden = false;
+    function reset() {
+      camInput.value = '';
+      fileInput.value = '';
+      $('subEmail').disabled = false;
+      $('subMsg').textContent = '';
+      show(intake);
+    }
+
+    // Passive email capture (optional, appears after a result).
+    $('subscribe').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const email = $('subEmail').value.trim();
+      if (!email || !SUBSCRIBE) return;
+      $('subMsg').textContent = 'Saving…';
+      try {
+        await fetch(SUBSCRIBE, {
+          method: 'POST',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ email, source: 'result' }),
+        });
+        $('subEmail').disabled = true;
+        $('subMsg').textContent = "You're on the list. Thanks!";
+      } catch {
+        $('subMsg').textContent = 'Could not save that just now — try again later.';
       }
+    });
 
-      file.addEventListener('change', async () => {
-        const f = file.files?.[0];
-        if (!f) return;
-        result.hidden = true;
-        const dataUrl = await downscale(f);
-        $('preview').src = dataUrl;
-        $('preview-wrap').hidden = false;
-        drop.hidden = true;
-        status.textContent = 'Counting your protein…';
-        try {
-          const r = await fetch(API, {
-            method: 'POST',
-            headers: { 'content-type': 'application/json' },
-            body: JSON.stringify({ image: dataUrl }),
-          });
-          if (!r.ok) throw new Error('Server ' + r.status);
-          showResult(await r.json());
-          status.textContent = '';
-        } catch (e) {
-          status.textContent = 'Something went wrong reading that photo. Please try again.';
-        }
-      });
+    camInput.addEventListener('change', () => handleFile(camInput.files?.[0]));
+    fileInput.addEventListener('change', () => handleFile(fileInput.files?.[0]));
+    $('btnCamera').addEventListener('click', () => camInput.click());
+    $('btnUpload').addEventListener('click', () => fileInput.click());
+    $('again').addEventListener('click', reset);
+    $('retry').addEventListener('click', reset);
 
-      $('again').addEventListener('click', () => {
-        file.value = '';
-        $('preview-wrap').hidden = true;
-        drop.hidden = false;
-        result.hidden = true;
-        status.textContent = '';
-      });
-    </script>
+    // Desktop drag & drop.
+    const drop = $('drop');
+    ['dragenter', 'dragover'].forEach((ev) =>
+      drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add('over'); }));
+    ['dragleave', 'drop'].forEach((ev) =>
+      drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove('over'); }));
+    drop.addEventListener('drop', (e) => {
+      const f = e.dataTransfer?.files?.[0];
+      if (f) handleFile(f);
+    });
+  </script>
 
-    <style>
-      :root { --ink:#171717; --muted:#6b6b6b; --line:#e7e4dd; --accent:#0b8e96; --bg:#faf8f3; }
-      * { box-sizing: border-box; }
-      body { margin:0; background:var(--bg); color:var(--ink); font-family:Inter,system-ui,sans-serif; line-height:1.5; }
-      main { max-width:560px; margin:0 auto; padding:48px 20px 64px; }
-      .hero { text-align:center; margin-bottom:28px; }
-      h1 { font-family:'DM Serif Display',serif; font-size:clamp(40px,9vw,60px); margin:0 0 10px; letter-spacing:-.5px; }
-      .sub { color:var(--muted); font-size:17px; margin:0 auto; max-width:30em; }
-      .card { background:#fff; border:1px solid var(--line); border-radius:16px; padding:20px; box-shadow:0 6px 30px rgba(0,0,0,.05); }
-      .drop { display:block; border:2px dashed #d8d2c6; border-radius:14px; padding:38px 16px; text-align:center; cursor:pointer; transition:.15s; }
-      .drop:hover, .drop:focus-within { border-color:var(--accent); background:#f4fbfb; }
-      .drop-inner { display:flex; flex-direction:column; gap:6px; align-items:center; }
-      .cam { font-size:34px; }
-      .drop-text { font-weight:700; font-size:18px; }
-      .drop-hint { color:var(--muted); font-size:14px; }
-      #preview-wrap { display:flex; flex-direction:column; align-items:center; gap:12px; }
-      #preview { max-height:320px; max-width:100%; border-radius:12px; }
-      .ghost { background:none; border:1px solid var(--line); border-radius:999px; padding:8px 16px; font:inherit; font-weight:600; cursor:pointer; color:var(--ink); }
-      .ghost:hover { border-color:var(--accent); color:var(--accent); }
-      .status { text-align:center; color:var(--muted); margin-top:14px; min-height:22px; font-weight:500; }
-      .result { margin-top:20px; padding-top:20px; border-top:1px solid var(--line); }
-      .total { display:flex; align-items:baseline; gap:8px; justify-content:center; margin-bottom:6px; }
-      .grams { font-family:'DM Serif Display',serif; font-size:64px; color:var(--accent); line-height:1; }
-      .unit { color:var(--muted); font-weight:700; font-size:20px; }
-      .verdict { text-align:center; font-weight:800; font-size:21px; margin:6px 0 16px; }
-      .items { list-style:none; margin:0 0 16px; padding:0; }
-      .items li { display:flex; justify-content:space-between; padding:9px 4px; border-bottom:1px solid var(--line); }
-      .items li .ig { font-weight:700; color:var(--accent); }
-      .summary { color:var(--muted); text-align:center; font-size:15px; margin:0 0 6px; }
-      .conf { text-align:center; color:#9a9a9a; font-size:12px; text-transform:uppercase; letter-spacing:.04em; margin:0; }
-      .foot { text-align:center; color:var(--muted); font-size:13px; margin-top:24px; }
-    </style>
-  </body>
-</html>
+  <style>
+    main { max-width:var(--maxw); margin:0 auto; padding:40px 20px 8px; }
+
+    .hero { text-align:center; margin-bottom:24px; }
+    .kicker { display:inline-block; font-size:12px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--accent); background:var(--accent-soft); padding:5px 12px; border-radius:999px; margin-bottom:16px; }
+    h1 { font-size:clamp(32px,7vw,44px); margin:0 0 12px; }
+    h1 em { font-style:normal; color:var(--accent); }
+    .sub { color:var(--ink-soft); font-size:16.5px; margin:0 auto; max-width:32em; }
+
+    .card { background:var(--bg-card); border:1px solid var(--line); border-radius:var(--radius-lg); padding:18px; box-shadow:var(--shadow); }
+
+    /* intake */
+    .drop { display:flex; flex-direction:column; align-items:center; gap:7px; border:2px dashed #cdd5cc; border-radius:var(--radius); padding:30px 16px; text-align:center; cursor:pointer; transition:border-color .15s, background .15s; }
+    .drop:hover, .drop.over { border-color:var(--accent); background:var(--accent-soft); }
+    .drop-icon { color:var(--accent); display:flex; }
+    .drop-text { font-weight:700; font-size:18px; }
+    .drop-hint { color:var(--ink-muted); font-size:13.5px; }
+    .actions { display:flex; gap:10px; margin-top:14px; }
+    .actions .btn { flex:1; }
+
+    .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; border:1px solid var(--line); background:var(--bg-card); color:var(--ink); border-radius:12px; padding:13px 18px; font:inherit; font-weight:700; font-size:16px; cursor:pointer; transition:border-color .15s, background .15s, color .15s; min-height:48px; }
+    .btn:hover { border-color:var(--accent); color:var(--accent); }
+    .btn.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+    .btn.primary:hover { background:var(--accent-ink); border-color:var(--accent-ink); color:#fff; }
+    .btn.wide { width:100%; margin-top:4px; }
+    .btn svg { flex:none; }
+
+    /* loading */
+    .loading { text-align:center; }
+    .thumb-wrap { position:relative; display:inline-block; border-radius:var(--radius); overflow:hidden; max-width:100%; }
+    .thumb-big { display:block; max-height:300px; max-width:100%; }
+    .scrim { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(246,247,245,.55); }
+    .spinner { width:38px; height:38px; border:4px solid color-mix(in srgb, var(--accent) 25%, transparent); border-top-color:var(--accent); border-radius:50%; animation:spin .8s linear infinite; }
+    @keyframes spin { to { transform:rotate(360deg); } }
+    .status { color:var(--ink-soft); font-weight:600; margin:14px 0 0; }
+
+    /* result */
+    .result-head { display:flex; align-items:center; gap:14px; margin-bottom:16px; }
+    .thumb-sm { width:60px; height:60px; object-fit:cover; border-radius:12px; flex:none; }
+    .verdict { font-weight:800; font-size:20px; letter-spacing:-.01em; line-height:1.25; margin:0; }
+
+    .stats { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    .stat { border-radius:var(--radius); padding:16px 12px 14px; text-align:center; }
+    .stat.protein { background:var(--accent-soft); }
+    .stat.leucine { background:var(--leu-soft); }
+    .stat-num { font-weight:800; font-size:44px; letter-spacing:-.03em; line-height:1; display:inline-flex; align-items:baseline; }
+    .stat.protein .stat-num { color:var(--accent-ink); }
+    .stat.leucine .stat-num { color:var(--leu-ink); }
+    .stat-unit { font-size:18px; margin-left:2px; }
+    .stat-label { display:block; margin-top:6px; font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; }
+    .stat.protein .stat-label { color:var(--accent-ink); }
+    .stat.leucine .stat-label { color:var(--leu-ink); }
+    .stat-cap { display:block; font-size:11px; color:var(--leu); font-weight:600; margin-top:2px; }
+
+    .threshold { margin:14px 0 0; padding:10px 14px; border-radius:10px; font-size:13.5px; font-weight:600; text-align:center; }
+    .threshold.hit { background:var(--accent-soft); color:var(--accent-ink); }
+    .threshold.miss { background:var(--leu-soft); color:var(--leu-ink); }
+
+    /* Item rows are injected via innerHTML, so they don't get Astro's scope
+       attribute — these must be :global to apply to dynamically-created nodes. */
+    :global(.items) { list-style:none; margin:18px 0 0; padding:0; }
+    :global(.items li) { display:flex; justify-content:space-between; align-items:center; gap:12px; padding:11px 2px; border-bottom:1px solid var(--line-soft); }
+    :global(.items li:last-child) { border-bottom:none; }
+    :global(.in) { font-weight:600; }
+    :global(.iv) { text-align:right; white-space:nowrap; }
+    :global(.ip) { font-weight:800; color:var(--accent-ink); }
+    :global(.il) { display:block; font-size:12px; color:var(--leu); font-weight:600; }
+
+    .summary { color:var(--ink-soft); font-size:15px; margin:16px 0 4px; }
+    .conf { color:var(--ink-muted); font-size:12px; text-transform:uppercase; letter-spacing:.04em; margin:0 0 16px; }
+
+    .subscribe { margin-top:18px; padding-top:18px; border-top:1px solid var(--line-soft); }
+    .sub-pitch { font-size:14px; color:var(--ink-soft); font-weight:600; text-align:center; margin:0 0 10px; }
+    .sub-row { display:flex; gap:8px; }
+    .sub-row input { flex:1; min-width:0; border:1px solid var(--line); border-radius:12px; padding:12px 14px; font:inherit; font-size:15px; min-height:48px; color:var(--ink); background:var(--bg-card); }
+    .sub-row input::placeholder { color:var(--ink-muted); }
+    .sub-row input:hover { border-color:#cdd5cc; }
+    .sub-row .btn { flex:none; }
+    .sub-msg { font-size:13px; font-weight:600; color:var(--accent-ink); text-align:center; margin:10px 0 0; min-height:18px; }
+
+    .errorbox { text-align:center; padding:10px 4px; }
+    .errorbox p { font-weight:600; margin:0 0 14px; }
+
+    /* how it works */
+    .how { margin:48px auto 8px; }
+    .how h2 { font-size:24px; text-align:center; margin:0 0 24px; }
+    .steps { list-style:none; margin:0; padding:0; display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+    .steps li { text-align:center; display:flex; flex-direction:column; align-items:center; gap:4px; }
+    .step-n { width:34px; height:34px; border-radius:50%; background:var(--accent-soft); color:var(--accent-ink); font-weight:800; font-size:15px; display:flex; align-items:center; justify-content:center; margin-bottom:6px; }
+    .steps strong { font-size:15px; }
+    .steps p { margin:0; color:var(--ink-soft); font-size:13.5px; line-height:1.45; }
+    .why { margin:30px auto 0; padding:16px 18px; background:var(--bg-card); border:1px solid var(--line); border-radius:var(--radius); color:var(--ink-soft); font-size:14.5px; line-height:1.6; text-align:center; max-width:34em; }
+    .why strong { color:var(--ink); }
+
+    @media (max-width:380px) {
+      .stat-num { font-size:40px; }
+      .actions { flex-direction:column; }
+    }
+  </style>
+</Layout>

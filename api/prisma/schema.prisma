@@ -12,12 +12,23 @@ model Scan {
   id           String   @id @default(cuid())
   createdAt    DateTime @default(now())
   totalProtein Int      @default(0)
+  totalLeucine Float    @default(0)
   items        Json
   verdict      String
   summary      String
   confidence   String   @default("low")
   email        String?
   sessionId    String?
+
+  @@index([createdAt])
+}
+
+/// Email signups for product updates (history, PDF export). No raw photos here.
+model Subscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+  source    String?
 
   @@index([createdAt])
 }

@@ -1,0 +1,59 @@
+---
+import Layout from '../layouts/Layout.astro';
+---
+<Layout
+  title="Privacy — Protein Check"
+  description="How Protein Check handles your meal photos and data. Short version: your photo is analyzed in the moment and never stored."
+  canonical="/privacy"
+>
+  <main id="main" class="legal">
+    <p class="back"><a href="/">← Protein Check</a></p>
+    <h1>Privacy</h1>
+    <p class="updated">Last updated June 2026</p>
+
+    <div class="tldr">
+      <strong>The short version:</strong> No account, no tracking profile. Your meal photo is sent
+      to Google's Gemini API to be analyzed and is <strong>not stored by us</strong>. We keep only the
+      anonymous nutrition estimate (grams of protein and leucine, item names) to understand how the
+      tool is used and to make it better.
+    </div>
+
+    <h2>What we collect</h2>
+    <p>When you analyze a meal, we receive the photo you choose, resized in your browser before it
+      leaves your device. We send it to the Google Gemini vision API, which returns an estimate. We
+      then store the <em>derived estimate</em> only: total protein, total leucine, the list of detected
+      items, and a short verdict. We do not store the photo itself.</p>
+
+    <h2>What we do not collect</h2>
+    <ul>
+      <li>We do not require an account, name, or email to use the tool.</li>
+      <li>We do not store your meal photos.</li>
+      <li>We do not sell data or share it with advertisers.</li>
+    </ul>
+
+    <h2>Third parties</h2>
+    <p>Photos are processed by <a href="https://ai.google.dev/" rel="noopener">Google's Gemini API</a>
+      under Google's terms. The site is hosted on Netlify and the API on Railway, which process
+      standard request logs (such as IP address and timestamp) to operate the service.</p>
+
+    <h2>Your data</h2>
+    <p>Stored estimates are anonymous and not linked to your identity. If you have a question about
+      data handling, email <a href="mailto:rajanlakhani@gmail.com">rajanlakhani@gmail.com</a>.</p>
+
+    <h2>Accuracy</h2>
+    <p>Estimates are AI-generated and approximate. Protein Check is for general information and is not
+      medical or dietary advice. See the <a href="/terms">Terms</a>.</p>
+  </main>
+
+  <style>
+    .legal { max-width:680px; margin:0 auto; padding:40px 20px 8px; }
+    .back a { font-weight:600; font-size:14px; text-decoration:none; }
+    .legal h1 { font-size:clamp(30px,7vw,42px); margin:18px 0 4px; }
+    .updated { color:var(--ink-muted); font-size:13px; margin:0 0 24px; }
+    .tldr { background:var(--accent-soft); color:var(--accent-ink); border-radius:var(--radius); padding:16px 18px; font-size:15px; line-height:1.6; margin-bottom:8px; }
+    .legal h2 { font-size:20px; margin:30px 0 8px; }
+    .legal p, .legal li { color:var(--ink-soft); font-size:15.5px; }
+    .legal ul { padding-left:20px; }
+    .legal li { margin:6px 0; }
+  </style>
+</Layout>

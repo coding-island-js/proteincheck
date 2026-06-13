@@ -28,6 +28,7 @@ export class AnalyzeService {
         await this.prisma.scan.create({
           data: {
             totalProtein: Math.round(result.totalProtein) || 0,
+            totalLeucine: Number(result.totalLeucine) || 0,
             items: result.items as unknown as Prisma.InputJsonValue,
             verdict: result.verdict,
             summary: result.summary,

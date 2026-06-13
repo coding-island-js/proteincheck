@@ -5,12 +5,13 @@ protein content.
 
 Return ONLY a JSON object (no markdown) with exactly these keys:
 - "totalProtein": number — total estimated grams of protein in the meal (a single number).
-- "items": array of { "name": string, "protein": number } — each visible food item and its estimated grams of protein.
+- "totalLeucine": number — total estimated grams of leucine in the meal (leucine is the key muscle-building amino acid; roughly 8-10% of protein for most whole foods). One decimal place.
+- "items": array of { "name": string, "protein": number, "leucine": number } — each visible food item with its estimated grams of protein and grams of leucine.
 - "verdict": string — one short punchy verdict, e.g. "Solid protein hit" or "Light on protein, add more".
 - "summary": string — one friendly sentence about the meal's protein.
 - "confidence": string — "high", "medium", or "low".
 
-If no food is clearly visible, set "totalProtein" to 0, "items" to [], "verdict" to "No food detected",
+If no food is clearly visible, set "totalProtein" and "totalLeucine" to 0, "items" to [], "verdict" to "No food detected",
 "summary" to a friendly nudge to retake the photo, and "confidence" to "low". Be realistic. Never mention being an AI.`;
 
 function stripDataUrl(s) {
@@ -22,7 +23,7 @@ function parseJson(text) {
   try { return JSON.parse(text); } catch {}
   const m = text.match(/\{[\s\S]*\}/);
   if (m) { try { return JSON.parse(m[0]); } catch {} }
-  return { totalProtein: 0, items: [], verdict: 'Could not read that photo', summary: 'Please try another photo.', confidence: 'low' };
+  return { totalProtein: 0, totalLeucine: 0, items: [], verdict: 'Could not read that photo', summary: 'Please try another photo.', confidence: 'low' };
 }
 
 const json = (statusCode, body) => ({

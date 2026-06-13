@@ -9,3 +9,4 @@ dist/
 **/.netlify/
 *.log
 .DS_Store
+.gstack/

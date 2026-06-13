@@ -21,11 +21,16 @@ export class ProteinItem {
   @ApiProperty() name!: string;
   @ApiProperty({ description: 'Estimated grams of protein for this item.' })
   protein!: number;
+  @ApiProperty({ description: 'Estimated grams of leucine for this item.' })
+  leucine!: number;
 }
 
 export class ScanResult {
   @ApiProperty({ description: 'Total estimated grams of protein in the meal.' })
   totalProtein!: number;
+
+  @ApiProperty({ description: 'Total estimated grams of leucine in the meal.' })
+  totalLeucine!: number;
 
   @ApiProperty({ type: [ProteinItem], description: 'Per-item protein breakdown.' })
   items!: ProteinItem[];

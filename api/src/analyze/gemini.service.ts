@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { GoogleGenAI } from '@google/genai';
 import { ScanResult } from './dto';
 
@@ -28,6 +28,7 @@ const FALLBACK: ScanResult = {
 
 @Injectable()
 export class GeminiService {
+  private readonly logger = new Logger(GeminiService.name);
   private readonly ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
   async analyze(imageBase64: string, mimeType = 'image/jpeg'): Promise<ScanResult> {
@@ -56,6 +57,10 @@ export class GeminiService {
           /* fall through */
         }
       }
+      // Empty text usually means a safety block or no candidate; log a snippet to diagnose.
+      this.logger.warn(
+        `Gemini response unparseable (len=${text.length}): ${JSON.stringify(text.slice(0, 200))}`,
+      );
       return FALLBACK;
     }
   }

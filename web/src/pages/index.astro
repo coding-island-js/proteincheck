@@ -284,7 +284,10 @@ const jsonLd = JSON.stringify({
       camInput.value = '';
       fileInput.value = '';
       $('subEmail').disabled = false;
+      $('subEmail').value = '';
       $('subMsg').textContent = '';
+      document.querySelector('.sub-pitch').hidden = false;
+      document.querySelector('.sub-row').hidden = false;
       show(intake);
     }
 
@@ -300,7 +303,9 @@ const jsonLd = JSON.stringify({
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({ email, source: 'result' }),
         });
-        $('subEmail').disabled = true;
+        // Collapse the form to a clean confirmation (best practice).
+        document.querySelector('.sub-pitch').hidden = true;
+        document.querySelector('.sub-row').hidden = true;
         $('subMsg').textContent = "You're on the list. Thanks!";
       } catch {
         $('subMsg').textContent = 'Could not save that just now — try again later.';

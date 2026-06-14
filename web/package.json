@@ -9,10 +9,14 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "astro": "astro"
+    "astro": "astro",
+    "seed-blog": "node scripts/seed-blog.mjs"
   },
   "dependencies": {
+    "@astrojs/netlify": "^7.0.13",
     "@google/genai": "^2.8.0",
+    "@netlify/blobs": "^8.2.0",
+    "@netlify/functions": "^5.3.0",
     "astro": "^6.4.6"
   }
 }

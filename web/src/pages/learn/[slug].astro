@@ -1,0 +1,144 @@
+---
+export const prerender = false;
+import Layout from '../../layouts/Layout.astro';
+import {
+  SITE,
+  store,
+  getQueue,
+  getBody,
+  published,
+  siblingsFor,
+  monthYear,
+  AUTHOR,
+  breadcrumbLd,
+  articleLd,
+  howToLd,
+  faqLd,
+} from '../../lib/blog.mjs';
+
+const { slug } = Astro.params;
+const s = await store();
+const q = await getQueue(s);
+const topic = published(q).find((t) => t.slug === slug);
+const body = topic ? await getBody(s, slug) : null;
+
+if (!topic || !body) {
+  // Render a clean, noindexed 404 rather than throwing.
+  Astro.response.status = 404;
+}
+
+const url = `${SITE}/learn/${slug}`;
+const siblings = topic ? siblingsFor(topic, q) : [];
+
+const jsonLd = topic && body
+  ? [breadcrumbLd(body.crumbTail, url), articleLd(topic, body, url), howToLd(topic, body), faqLd(body)]
+      .map((o) => JSON.stringify(o))
+      .join('</script>\n<script type="application/ld+json">')
+  : undefined;
+
+Astro.response.headers.set(
+  'Netlify-CDN-Cache-Control',
+  'public, s-maxage=300, stale-while-revalidate=86400'
+);
+---
+{topic && body ? (
+  <Layout
+    title={topic.title}
+    description={body.metaDescription}
+    canonical={`/learn/${slug}`}
+    ogType="article"
+    ogImage={`/learn/og/${slug}.png`}
+    jsonLd={jsonLd}
+  >
+    <main id="main" class="prose">
+      <p class="crumb"><a href="/">Protein Check</a><span class="sep">/</span><a href="/learn">learn</a><span class="sep">/</span>{body.crumbTail}</p>
+      <h1>{topic.title}</h1>
+      <p class="updated">Updated <b>{monthYear()}</b> · ~2-minute read · by {AUTHOR.name}</p>
+
+      <img class="hero" src={`/learn/og/${slug}.png`} width="1200" height="630" loading="eager" alt={`${topic.title} — illustrative high-protein meal`} />
+
+      <div class="answer">
+        <p>{body.answer}</p>
+      </div>
+
+      {Array.isArray(body.whoFor) && body.whoFor.length > 0 && (
+        <>
+          <h2>Who this is for</h2>
+          <ul>{body.whoFor.map((x) => <li>{x}</li>)}</ul>
+        </>
+      )}
+
+      {body.whyItMatters && (
+        <>
+          <h2>Why it matters</h2>
+          <p>{body.whyItMatters}</p>
+        </>
+      )}
+
+      {Array.isArray(body.quickNumbers) && body.quickNumbers.length > 0 && (
+        <>
+          <h2>The numbers</h2>
+          <ul class="quick">
+            {body.quickNumbers.map((n) => (
+              <li><span class="qv">{n.value}</span><span class="ql">{n.label}</span></li>
+            ))}
+          </ul>
+        </>
+      )}
+
+      <h2>What to do</h2>
+      <ol>
+        {body.theMove.map((m) => (
+          <li><strong>{m.lead}.</strong> {m.text}</li>
+        ))}
+      </ol>
+      {body.cue && <p class="cue-line">One line to remember: <em>{body.cue}</em></p>}
+
+      {body.doNow && (
+        <>
+          <h2>Do this now</h2>
+          <p>{body.doNow.intro}</p>
+          <ul>{(body.doNow.steps || []).map((x) => <li>{x}</li>)}</ul>
+        </>
+      )}
+
+      {siblings.length > 0 && (
+        <>
+          <h2>Related guides</h2>
+          <ul class="related">
+            {siblings.map((sib) => (
+              <li><a href={`/learn/${sib.slug}`}>{sib.title}</a></li>
+            ))}
+          </ul>
+        </>
+      )}
+
+      <h2>Check your plate in seconds</h2>
+      <p>Not sure how much protein is actually on your plate? Snap a photo and the free <a href="/">Protein Check</a> estimates the protein and leucine in seconds — no signup.</p>
+      <p><a class="cta-tool" href="/">Check my meal →</a></p>
+
+      {body.faqQ && (
+        <>
+          <h2>{body.faqQ}</h2>
+          <p>{body.faqA}</p>
+        </>
+      )}
+
+      <hr />
+      <p class="soon"><a href="/learn">← all guides</a></p>
+      <p class="disclaimer">General information from a real person who builds nutrition tools — not medical or dietary advice. Numbers are estimates; talk to a professional for advice specific to you.</p>
+    </main>
+  </Layout>
+) : (
+  <Layout
+    title="Guide not found — Protein Check"
+    description="That guide doesn't exist yet."
+    noindex={true}
+  >
+    <main id="main" class="prose">
+      <p class="crumb"><a href="/">Protein Check</a><span class="sep">/</span>learn</p>
+      <h1>Guide not found</h1>
+      <p>That guide doesn't exist (yet). Browse the <a href="/learn">learn hub</a> or <a href="/">check your meal</a>.</p>
+    </main>
+  </Layout>
+)}

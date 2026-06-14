@@ -4,10 +4,14 @@ export interface Props {
   description: string;
   canonical?: string;
   jsonLd?: string;
+  ogImage?: string;
+  ogType?: string;
+  noindex?: boolean;
 }
 const SITE = 'https://proteincheck.withmagic.ai';
-const { title, description, canonical, jsonLd } = Astro.props;
+const { title, description, canonical, jsonLd, ogImage, ogType, noindex } = Astro.props;
 const canonicalUrl = canonical ? `${SITE}${canonical}` : SITE;
+const ogImageUrl = ogImage ? (ogImage.startsWith('http') ? ogImage : `${SITE}${ogImage}`) : `${SITE}/og.png`;
 ---
 <!doctype html>
 <html lang="en">
@@ -18,20 +22,21 @@ const canonicalUrl = canonical ? `${SITE}${canonical}` : SITE;
     <meta name="description" content={description} />
     <link rel="canonical" href={canonicalUrl} />
     <meta name="theme-color" content="#f6f7f5" />
+    {noindex && <meta name="robots" content="noindex" />}
 
     <!-- Open Graph / Twitter -->
-    <meta property="og:type" content="website" />
+    <meta property="og:type" content={ogType ?? 'website'} />
     <meta property="og:site_name" content="Protein Check" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={canonicalUrl} />
-    <meta property="og:image" content={`${SITE}/og.png`} />
+    <meta property="og:image" content={ogImageUrl} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="twitter:title" content={title} />
     <meta name="twitter:description" content={description} />
-    <meta name="twitter:image" content={`${SITE}/og.png`} />
+    <meta name="twitter:image" content={ogImageUrl} />
 
     <!-- Icons -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
@@ -57,6 +62,7 @@ const canonicalUrl = canonical ? `${SITE}${canonical}` : SITE;
           <strong>Protein Check</strong>
         </div>
         <nav class="foot-nav" aria-label="Footer">
+          <a href="/learn">Guides</a>
           <a href="/privacy">Privacy</a>
           <a href="/terms">Terms</a>
           <a href="https://github.com/coding-island-js/proteincheck" rel="noopener">GitHub</a>
@@ -106,6 +112,47 @@ const canonicalUrl = canonical ? `${SITE}${canonical}` : SITE;
         html { scroll-behavior:auto; }
         *, *::before, *::after { animation-duration:.001ms !important; animation-iteration-count:1 !important; transition-duration:.001ms !important; }
       }
+
+      /* ---- /learn blog (hub + article) ---- */
+      .prose { max-width:680px; margin:0 auto; padding:36px 20px 8px; }
+      .crumb { font-size:13px; color:var(--ink-muted); margin:0 0 18px; }
+      .crumb a { color:var(--ink-soft); text-decoration:none; font-weight:600; }
+      .crumb a:hover { color:var(--accent); }
+      .crumb .sep { margin:0 8px; color:var(--line); }
+      .prose h1 { font-size:clamp(28px,6vw,40px); margin:0 0 8px; }
+      .prose h2 { font-size:21px; margin:32px 0 10px; }
+      .prose p, .prose li { color:var(--ink-soft); font-size:16.5px; line-height:1.65; }
+      .prose .updated { color:var(--ink-muted); font-size:13.5px; margin:0 0 22px; }
+      .prose .hero { width:100%; height:auto; aspect-ratio:1200/630; object-fit:cover; border-radius:var(--radius); border:1px solid var(--line); margin:0 0 24px; background:var(--accent-soft); }
+      .answer { background:var(--accent-soft); border:1px solid var(--line); border-radius:var(--radius); padding:18px 20px; margin:0 0 8px; }
+      .answer p { color:var(--accent-ink); font-size:17.5px; line-height:1.6; margin:0; font-weight:500; }
+      .prose ul, .prose ol { padding-left:22px; }
+      .prose li { margin:7px 0; }
+      .prose ol li::marker { font-weight:800; color:var(--accent); }
+      .prose ol li strong { color:var(--ink); }
+      .quick { list-style:none; padding:0; margin:18px 0; display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px; }
+      .quick li { background:var(--bg-card); border:1px solid var(--line); border-radius:var(--radius-sm); padding:14px 16px; margin:0; }
+      .quick .qv { display:block; font-size:24px; font-weight:800; color:var(--accent-ink); letter-spacing:-.02em; }
+      .quick .ql { display:block; font-size:12.5px; color:var(--ink-muted); font-weight:600; text-transform:uppercase; letter-spacing:.04em; margin-top:3px; }
+      .cue-line { font-size:16.5px; color:var(--ink); }
+      .cue-line em { font-style:normal; font-weight:700; color:var(--accent-ink); }
+      .related { list-style:none; padding:0; margin:14px 0; }
+      .related li { border-bottom:1px solid var(--line-soft); padding:12px 0; margin:0; }
+      .related li:last-child { border-bottom:none; }
+      .related a { font-weight:700; font-size:16px; text-decoration:none; }
+      .related .tip { color:var(--ink-muted); font-size:14px; margin-top:3px; line-height:1.5; }
+      .cta-tool { display:inline-flex; align-items:center; gap:8px; background:var(--accent); color:#fff; border-radius:12px; padding:13px 20px; font-weight:700; font-size:16px; text-decoration:none; }
+      .cta-tool:hover { background:var(--accent-ink); color:#fff; }
+      .prose hr { border:none; border-top:1px solid var(--line); margin:32px 0 16px; }
+      .prose .disclaimer { color:var(--ink-muted); font-size:12.5px; line-height:1.55; }
+      .prose .soon a { font-weight:600; text-decoration:none; }
+      /* hub cards */
+      .hub-group { margin:28px 0; }
+      .hub-group h2 { font-size:18px; margin:0 0 12px; }
+      .hub-list { list-style:none; padding:0; margin:0; }
+      .hub-list li { border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px; margin:0 0 10px; background:var(--bg-card); }
+      .hub-list a { font-weight:700; font-size:16.5px; text-decoration:none; }
+      .hub-list .tip { color:var(--ink-soft); font-size:14px; margin-top:4px; line-height:1.5; }
     </style>
   </body>
 </html>

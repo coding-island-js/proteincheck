@@ -1,0 +1,49 @@
+---
+export const prerender = false;
+import Layout from '../../layouts/Layout.astro';
+import { store, getQueue, byCluster, published, collectionLd } from '../../lib/blog.mjs';
+
+const s = await store();
+const q = await getQueue(s);
+const groups = byCluster(q);
+const count = published(q).length;
+const jsonLd = JSON.stringify(collectionLd(q));
+
+Astro.response.headers.set(
+  'Netlify-CDN-Cache-Control',
+  'public, s-maxage=300, stale-while-revalidate=86400'
+);
+---
+<Layout
+  title="Protein & leucine guides — Protein Check"
+  description="Plain-English guides on how much protein you need, why leucine matters, and the highest-protein foods — from the team behind the free meal-photo protein checker."
+  canonical="/learn"
+  jsonLd={jsonLd}
+>
+  <main id="main" class="prose">
+    <p class="crumb"><a href="/">Protein Check</a><span class="sep">/</span>learn</p>
+    <h1>Protein, leucine &amp; muscle — straight answers</h1>
+    <p class="updated">Short, honest guides. Each one answers a single question in its first three sentences.</p>
+
+    {count === 0 && (
+      <p>New guides are on the way — published every Monday and Thursday. Check back soon, or <a href="/">try the protein checker</a> now.</p>
+    )}
+
+    {groups.map((g) => (
+      <section class="hub-group">
+        <h2>{g.label}</h2>
+        <ul class="hub-list">
+          {g.items.map((t) => (
+            <li>
+              <a href={`/learn/${t.slug}`}>{t.title}</a>
+              <div class="tip">{t.anchor}</div>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ))}
+
+    <hr />
+    <p class="soon"><a href="/">← snap a meal and check its protein</a></p>
+  </main>
+</Layout>

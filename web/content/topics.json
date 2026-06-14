@@ -1,0 +1,344 @@
+{
+  "_comment": "Operational queue for the auto-writer. The scheduled function (netlify/functions/publish-blog.mjs) picks the first status:queued item in array order, writes it to Netlify Blobs, flips it to published. Titles ARE the long-tail target query (write the H1 the way people search). Strategy + keyword map: content/keyword-research.md. The first ~10 are the launch batch (highest intent across all clusters). Cadence: Mon+Thu.",
+  "cadence": "Mon+Thu",
+  "topics": [
+    {
+      "slug": "how-much-protein-per-day",
+      "cluster": "daily-protein",
+      "pillar": true,
+      "fit": "H",
+      "title": "How much protein do I need a day?",
+      "intent": "how much protein per day / daily protein intake / grams of protein per day",
+      "anchor": "Sedentary adults need about 0.8 g of protein per kg of body weight; for building or keeping muscle aim higher, around 1.6 g per kg (roughly 0.7 g per pound).",
+      "status": "queued"
+    },
+    {
+      "slug": "how-much-protein-to-lose-weight",
+      "cluster": "weight-loss",
+      "pillar": true,
+      "fit": "H",
+      "title": "How much protein should I eat to lose weight?",
+      "intent": "how much protein to lose weight / protein for fat loss / protein deficit",
+      "anchor": "While dieting, push protein to about 1.8-2.2 g per kg of body weight to stay full and protect muscle, spread as 25-30 g per meal.",
+      "status": "queued"
+    },
+    {
+      "slug": "what-is-leucine",
+      "cluster": "leucine",
+      "pillar": true,
+      "fit": "H",
+      "title": "What is leucine and why does it matter for building muscle?",
+      "intent": "what is leucine / leucine benefits / muscle building amino acid",
+      "anchor": "Leucine is the amino acid that flips on muscle protein synthesis through the mTOR pathway. Hit about 2.5-3 g of leucine in a meal and your body starts building.",
+      "status": "queued"
+    },
+    {
+      "slug": "how-much-protein-per-meal-to-build-muscle",
+      "cluster": "daily-protein",
+      "fit": "H",
+      "title": "How much protein should I eat per meal to build muscle?",
+      "intent": "protein per meal / how much protein per sitting / 30g per meal",
+      "anchor": "Aim for about 20-40 g of quality protein per meal, enough to clear the ~2.5-3 g leucine threshold that maximally triggers muscle growth.",
+      "status": "queued"
+    },
+    {
+      "slug": "highest-protein-foods",
+      "cluster": "high-protein-foods",
+      "pillar": true,
+      "fit": "H",
+      "title": "What foods have the most protein?",
+      "intent": "highest protein foods / most protein / protein rich foods list",
+      "anchor": "Chicken breast, Greek yogurt, eggs, lean beef, fish, lentils and tofu pack the most protein per bite. Here are the real numbers.",
+      "status": "queued"
+    },
+    {
+      "slug": "how-to-get-enough-protein-vegetarian",
+      "cluster": "plant-based",
+      "pillar": true,
+      "fit": "H",
+      "title": "How do I get enough protein as a vegetarian?",
+      "intent": "vegetarian protein / how to get protein without meat / plant based protein",
+      "anchor": "Lean on soy (tofu, tempeh, edamame), beans, lentils, dairy and eggs, eat a bit more total protein, and combine sources across the day to cover all the amino acids.",
+      "status": "queued"
+    },
+    {
+      "slug": "leucine-threshold",
+      "cluster": "leucine",
+      "fit": "H",
+      "title": "What is the leucine threshold for muscle growth?",
+      "intent": "leucine threshold / how much leucine per meal / leucine for muscle",
+      "anchor": "The leucine threshold is about 2.5 g per meal for younger adults and closer to 3 g for older adults, the dose that maximally switches on muscle protein synthesis.",
+      "status": "queued"
+    },
+    {
+      "slug": "best-high-protein-snacks-weight-loss",
+      "cluster": "weight-loss",
+      "fit": "H",
+      "title": "What are the best high-protein snacks for weight loss?",
+      "intent": "high protein snacks / protein snacks for weight loss / filling snacks",
+      "anchor": "Greek yogurt, cottage cheese, a tuna pouch, edamame and a scoop of whey are the most filling protein-per-calorie snacks for losing fat.",
+      "status": "queued"
+    },
+    {
+      "slug": "signs-not-enough-protein",
+      "cluster": "daily-protein",
+      "fit": "H",
+      "title": "What are the signs you're not eating enough protein?",
+      "intent": "not enough protein / protein deficiency signs / low protein symptoms",
+      "anchor": "Constant hunger, slow recovery, stalled muscle, hair thinning, weak nails and getting sick often can all point to too little protein.",
+      "status": "queued"
+    },
+    {
+      "slug": "cheapest-high-protein-foods",
+      "cluster": "high-protein-foods",
+      "fit": "H",
+      "title": "What are the cheapest high-protein foods?",
+      "intent": "cheap protein / budget high protein foods / protein on a budget",
+      "anchor": "Eggs, canned tuna, lentils, dried beans, oats, milk and peanut butter give the most protein per dollar, no supplements needed.",
+      "status": "queued"
+    },
+    {
+      "slug": "how-much-protein-in-chicken-breast",
+      "cluster": "high-protein-foods",
+      "fit": "H",
+      "title": "How much protein is in a chicken breast?",
+      "intent": "protein in chicken breast / chicken protein grams / is chicken enough",
+      "anchor": "A medium cooked chicken breast (about 170 g) has roughly 50 g of protein, well over the leucine threshold for one meal.",
+      "status": "queued"
+    },
+    {
+      "slug": "how-much-protein-in-an-egg",
+      "cluster": "high-protein-foods",
+      "fit": "H",
+      "title": "How much protein is in an egg?",
+      "intent": "protein in eggs / egg protein / how many eggs for protein",
+      "anchor": "One large egg has about 6 g of protein, so it takes roughly 3-4 eggs to reach the leucine threshold for a meal.",
+      "status": "queued"
+    },
+    {
+      "slug": "how-much-protein-in-tofu",
+      "cluster": "plant-based",
+      "fit": "H",
+      "title": "How much protein is in tofu?",
+      "intent": "protein in tofu / tofu protein grams / is tofu high protein",
+      "anchor": "Firm tofu has about 9 g of protein per 100 g, so half a block (around half a cup) delivers roughly 20 g of plant protein.",
+      "status": "queued"
+    },
+    {
+      "slug": "how-much-protein-do-i-need-to-build-muscle",
+      "cluster": "daily-protein",
+      "fit": "H",
+      "title": "How much protein do I need to build muscle?",
+      "intent": "protein to build muscle / muscle gain protein / bulking protein per day",
+      "anchor": "About 1.6 g of protein per kg of body weight per day, split across 3-4 meals that each clear the leucine threshold, drives muscle gain.",
+      "status": "queued"
+    },
+    {
+      "slug": "leucine-rich-foods",
+      "cluster": "leucine",
+      "fit": "H",
+      "title": "What foods are highest in leucine?",
+      "intent": "leucine rich foods / foods high in leucine / high leucine foods list",
+      "anchor": "Whey, eggs, chicken, beef, fish, soy and dairy are the densest leucine sources; animal proteins generally beat plants gram for gram.",
+      "status": "queued"
+    },
+    {
+      "slug": "is-greek-yogurt-high-in-protein",
+      "cluster": "high-protein-foods",
+      "fit": "H",
+      "title": "Is Greek yogurt high in protein?",
+      "intent": "greek yogurt protein / high protein yogurt / yogurt for muscle",
+      "anchor": "Plain Greek yogurt has about 10 g of protein per 100 g, so a single large 6 oz tub gives you around 18 g, most of a meal's protein.",
+      "status": "queued"
+    },
+    {
+      "slug": "how-to-add-more-protein-to-your-meals",
+      "cluster": "high-protein-foods",
+      "fit": "H",
+      "title": "How can I add more protein to my meals?",
+      "intent": "how to add protein to meals / easy ways to eat more protein / increase protein",
+      "anchor": "Anchor every meal with one real protein, then stack easy add-ons: Greek yogurt, eggs, beans, a scoop of whey, or a handful of nuts.",
+      "status": "queued"
+    },
+    {
+      "slug": "can-you-eat-too-much-protein",
+      "cluster": "daily-protein",
+      "fit": "M",
+      "title": "Can you eat too much protein?",
+      "intent": "too much protein / protein side effects / is high protein bad for kidneys",
+      "anchor": "For healthy people, high protein is safe; beyond about 2.2 g per kg there's little extra muscle benefit, so the rest is just calories.",
+      "status": "queued"
+    },
+    {
+      "slug": "protein-shake-before-or-after-workout",
+      "cluster": "timing",
+      "fit": "H",
+      "title": "Should I drink a protein shake before or after a workout?",
+      "intent": "protein shake before or after workout / when to drink protein / timing",
+      "anchor": "It barely matters. Total daily protein drives results, so have your shake whenever fits, ideally within a couple of hours of training.",
+      "status": "queued"
+    },
+    {
+      "slug": "high-protein-breakfast-ideas",
+      "cluster": "timing",
+      "fit": "H",
+      "title": "What's a high-protein breakfast?",
+      "intent": "high protein breakfast / protein in the morning / breakfast for muscle",
+      "anchor": "Aim for 25-40 g at breakfast, eggs, Greek yogurt, cottage cheese or a shake, to start the day above the leucine threshold.",
+      "status": "queued"
+    },
+    {
+      "slug": "how-much-protein-in-peanut-butter",
+      "cluster": "high-protein-foods",
+      "fit": "M",
+      "title": "How much protein is in peanut butter?",
+      "intent": "protein in peanut butter / peanut butter protein grams / is peanut butter high protein",
+      "anchor": "Peanut butter has about 4 g of protein per tablespoon (around 24 g per 100 g), good as an add-on but not a complete protein on its own.",
+      "status": "queued"
+    },
+    {
+      "slug": "how-much-protein-in-lentils-and-beans",
+      "cluster": "plant-based",
+      "fit": "M",
+      "title": "How much protein is in lentils and beans?",
+      "intent": "protein in lentils / beans protein / legume protein grams",
+      "anchor": "Half a cup of cooked lentils has about 9 g of protein (17 g per cup); most cooked beans land around 7-8 g per half cup.",
+      "status": "queued"
+    },
+    {
+      "slug": "best-vegan-protein-sources",
+      "cluster": "plant-based",
+      "fit": "H",
+      "title": "What are the best vegan protein sources?",
+      "intent": "best vegan protein / highest protein vegan foods / plant protein ranked",
+      "anchor": "Soy (tofu, tempeh, edamame), seitan, lentils, beans and pea protein lead the pack for plant-based protein density.",
+      "status": "queued"
+    },
+    {
+      "slug": "how-much-protein-do-women-need",
+      "cluster": "daily-protein",
+      "fit": "M",
+      "title": "How much protein do women need?",
+      "intent": "protein for women / how much protein female / women weight loss protein",
+      "anchor": "The same ratios apply: about 1.6 g per kg to build muscle and 1.8-2.2 g per kg while dieting to stay full and hold muscle.",
+      "status": "queued"
+    },
+    {
+      "slug": "how-much-protein-do-older-adults-need",
+      "cluster": "daily-protein",
+      "fit": "M",
+      "title": "How much protein do older adults need?",
+      "intent": "protein for seniors / protein for elderly / protein over 50",
+      "anchor": "Older adults need more, not less, about 1.2-1.6 g per kg, with closer to 3 g of leucine per meal to fight age-related muscle loss.",
+      "status": "queued"
+    },
+    {
+      "slug": "leucine-vs-bcaa",
+      "cluster": "leucine",
+      "fit": "M",
+      "title": "Leucine vs BCAAs: what's the difference?",
+      "intent": "leucine vs bcaa / are bcaas worth it / bcaa for muscle",
+      "anchor": "Leucine is the one BCAA that actually triggers muscle growth; whole protein or a leucine-rich meal beats a BCAA supplement for most people.",
+      "status": "queued"
+    },
+    {
+      "slug": "protein-shake-vs-whole-food",
+      "cluster": "high-protein-foods",
+      "fit": "M",
+      "title": "Is a protein shake as good as real food?",
+      "intent": "protein shake vs food / is whey worth it / shake or meal",
+      "anchor": "Whole food wins for fullness and nutrients; shakes win for speed. Both build muscle if they hit the leucine threshold.",
+      "status": "queued"
+    },
+    {
+      "slug": "complete-vs-incomplete-protein",
+      "cluster": "plant-based",
+      "fit": "M",
+      "title": "What's the difference between complete and incomplete protein?",
+      "intent": "complete vs incomplete protein / amino acid profile / do I need complete proteins",
+      "anchor": "A complete protein has all nine essential amino acids in good amounts. Eat varied plants across the day and you cover the gaps.",
+      "status": "queued"
+    },
+    {
+      "slug": "is-cottage-cheese-high-in-protein",
+      "cluster": "high-protein-foods",
+      "fit": "M",
+      "title": "Is cottage cheese high in protein?",
+      "intent": "cottage cheese protein / protein in cottage cheese / cottage cheese for muscle",
+      "anchor": "Cottage cheese has about 11 g of protein per 100 g and is rich in slow-digesting casein, making it a strong protein choice.",
+      "status": "queued"
+    },
+    {
+      "slug": "should-i-eat-protein-before-bed",
+      "cluster": "timing",
+      "fit": "M",
+      "title": "Should I eat protein before bed?",
+      "intent": "protein before bed / casein at night / nighttime protein for muscle",
+      "anchor": "A slow protein like casein or cottage cheese before sleep can feed overnight muscle repair, useful if you train hard.",
+      "status": "queued"
+    },
+    {
+      "slug": "whey-vs-plant-protein-powder",
+      "cluster": "plant-based",
+      "fit": "M",
+      "title": "Whey vs plant protein powder: which is better?",
+      "intent": "whey vs plant protein / best protein powder / vegan protein powder",
+      "anchor": "Whey is the leucine king, but a soy or blended pea-rice powder gets you there too. Pick what fits your diet and your gut.",
+      "status": "queued"
+    },
+    {
+      "slug": "how-do-i-know-how-much-protein-is-in-my-meal",
+      "cluster": "high-protein-foods",
+      "fit": "M",
+      "title": "How do I know how much protein is in my meal?",
+      "intent": "how much protein in a meal / estimate protein / count protein in food",
+      "anchor": "Eyeball the protein source: a palm-sized portion of meat or fish is roughly 25-30 g. Or snap a photo and let a tool estimate it.",
+      "status": "queued"
+    },
+    {
+      "slug": "common-protein-myths",
+      "cluster": "daily-protein",
+      "fit": "M",
+      "title": "What are the most common protein myths?",
+      "intent": "protein myths / protein misconceptions / debunked protein facts",
+      "anchor": "You can use more than 30 g in a meal, protein won't wreck healthy kidneys, and plant eaters can build plenty of muscle.",
+      "status": "queued"
+    },
+    {
+      "slug": "how-much-protein-do-runners-need",
+      "cluster": "daily-protein",
+      "fit": "L",
+      "title": "Do runners and endurance athletes need protein?",
+      "intent": "protein for runners / endurance protein / cardio protein needs",
+      "anchor": "Yes. Endurance athletes need about 1.2-1.6 g per kg to repair muscle and adapt, not just carbs.",
+      "status": "queued"
+    },
+    {
+      "slug": "should-i-spread-protein-across-the-day",
+      "cluster": "timing",
+      "fit": "M",
+      "title": "Is it better to spread protein across the day?",
+      "intent": "protein timing / spread protein evenly / protein per meal vs total",
+      "anchor": "Spreading protein into 3-4 meals that each hit the leucine threshold beats loading it all into one big dinner.",
+      "status": "queued"
+    },
+    {
+      "slug": "lean-protein-foods-for-cutting",
+      "cluster": "weight-loss",
+      "fit": "M",
+      "title": "What are the best lean protein foods for cutting calories?",
+      "intent": "lean protein / low calorie high protein foods / cutting foods",
+      "anchor": "Chicken breast, white fish, egg whites, nonfat Greek yogurt and tofu give the most protein for the fewest calories.",
+      "status": "queued"
+    },
+    {
+      "slug": "does-protein-help-lose-belly-fat",
+      "cluster": "weight-loss",
+      "fit": "M",
+      "title": "Does eating more protein help you lose belly fat?",
+      "intent": "protein for belly fat / does protein burn fat / protein and fat loss",
+      "anchor": "Protein doesn't target belly fat directly, but it keeps you full, protects muscle, and burns more calories to digest, helping overall fat loss in a deficit.",
+      "status": "queued"
+    }
+  ]
+}

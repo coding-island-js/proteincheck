@@ -60,6 +60,7 @@ Hard rules:
 - Real, mainstream nutrition only (e.g. ~1.6 g/kg/day for muscle, ~2.5-3 g leucine per meal, ~20-40 g protein per meal, chicken breast ~31 g/100g, egg ~6 g, firm tofu ~9 g/100g, Greek yogurt ~10 g/100g, lentils ~9 g/half-cup, peanut butter ~4 g/tbsp). Never invent studies or numbers.
 - SEO: weave in the exact long-tail phrasing and close variants naturally. The "faqs" are real long-tail follow-ups people search.
 - No medical claims. General information, not medical or dietary advice. American spelling. No links, no markdown inside field values.
+- EVERY object in "foods" MUST have a non-empty "serving" (the exact portion, e.g. "100 g cooked", "1 large", "1/2 cup") AND a non-empty "protein" in grams. Never omit "serving" — a row without a portion is useless.
 
 Respond with ONLY this JSON, no markdown fence. Omit optional fields you don't use:
 {

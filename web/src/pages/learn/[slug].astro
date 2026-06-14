@@ -25,7 +25,7 @@ const body = topic ? await getBody(s, slug) : null;
 if (!topic || !body) Astro.response.status = 404;
 
 const url = `${SITE}/learn/${slug}`;
-const IMG_V = 5; // bump to bust the OG-image CDN cache after a re-image pass
+const IMG_V = 6; // bump to bust the OG-image CDN cache after a re-image pass
 const ogPath = `/learn/og/${slug}.png?v=${IMG_V}`;
 const siblings = topic ? siblingsFor(topic, q) : [];
 const paras = (t) => String(t || '').split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);

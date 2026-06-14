@@ -35,11 +35,11 @@ const TYPE_GUIDE = {
 };
 
 const IMG_SUBJECT_GUIDE = {
-  amount: 'name the single most relevant food, or a simple metaphor for the amount.',
+  amount: 'name 3-5 real high-protein foods this article is about (e.g. "eggs, chicken breast, Greek yogurt").',
   foodlist: 'name 4-6 of the specific foods so the illustration can show a spread of them.',
   singlefood: 'name the one food, e.g. "a single chicken breast".',
   concept:
-    'a clever visual METAPHOR for the idea — NOT a plate of food. e.g. low protein -> a wilting plant reviving; the leucine threshold -> a key turning a lock; protein timing -> an hourglass; spreading protein -> evenly spaced stepping stones.',
+    'name 3-5 real high-protein foods relevant to this article. Never a metaphor, never bread/rice/pasta or other carbs.',
 };
 
 function textPrompt(topic, type) {
@@ -72,7 +72,7 @@ Respond with ONLY this JSON, no markdown fence. Omit optional fields you don't u
  "steps": [{"lead":"1-3 word step","text":"<=20 words"}],
  "cue": "one memorable line, <=12 words",
  "faqs": [{"q":"a long-tail follow-up question","a":"2-3 sentence answer"}],
- "imageSubject": "a short concrete subject for an illustration of THIS article — name the specific food(s) or the idea/metaphor. Do NOT describe art style or composition."
+ "imageSubject": "3-5 specific REAL foods to illustrate THIS article, comma-separated (e.g. 'eggs, chicken breast, lentils'). Never a metaphor, never bread/rice/pasta/cake or other carbs. Do NOT describe art style or composition."
 }
 Provide 1-3 faqs and 1-4 sections.`;
 }
@@ -140,72 +140,108 @@ Respond with ONLY JSON: {"body": { ...same shape... }, "flags": ["short concern"
 }
 
 // ---------------------------------------------------------------------------
-// IMAGE — one shared hand-drawn medium, many different compositions so the set
-// never feels cloned. The archetype is chosen per-article (by type + a stable
-// hash of the slug); the writer supplies the topic-specific subject.
+// IMAGE — ONE consistent, elegant illustrated still life across the whole blog.
+// The subject is the article's REAL foods (so the picture always matches the
+// words), and a vision QA pass rejects anything with stray text, a wrong/carby
+// food, or faces, retrying until it's clean. No archetypes, no metaphors.
 // ---------------------------------------------------------------------------
-const IMG_BASE =
-  'Hand-drawn colored-pencil and ink editorial illustration by a master illustrator: richly detailed, intricate linework, deeply layered shading, visible paper texture, cohesive and tasteful, full of life. ABSOLUTELY NOT a photograph, not photorealistic, not a 3D render, not flat vector, not cartoon or comic. NO text, letters, words, labels, brand names, numbers or signage anywhere — any packaging must be completely blank. No human faces.';
 
-const ART = {
-  macro:
-    'Composition: an extreme, dramatic close-up of the single most iconic element, filling the frame against a BOLD saturated solid-color background (deep teal, oxblood, or warm ochre). High impact, minimal clutter, a little glow.',
-  metaphor:
-    "Composition: a poetic, slightly surreal conceptual metaphor for the article's IDEA, on a clean cream background with generous negative space. Symbolic, witty, editorial. Do NOT draw a spread of dishes or a plate of food — food is secondary or absent.",
-  flatlay:
-    'Composition: a bold top-down flat-lay arranged as a clean graphic pattern (an arc, grid, or gradient by size) on a saturated colored-paper background (mustard, clay, or sage). Designy, rhythmic, vibrant.',
-  botanical:
-    'Composition: a vintage naturalist botanical-study plate of the subject shown in several views and cross-sections on aged cream parchment. Intricate, scientific, elegant. No kitchen, no table.',
-  stilllife:
-    'Composition: a moody Dutch-master still life lit by a single dramatic side light against a near-black background. Chiaroscuro, rich shadows, painterly and premium.',
-  lifestyle:
-    'Composition: a warm, dynamic lifestyle vignette that implies a person without showing any face (an open gym bag with a blank shaker, a packed lunch on a desk, a sunlit grab-and-go scene). Candid and editorial.',
-};
+// Foods that must never appear unless the article is literally about them — this
+// is the "don't show cake/rice on a high-protein post" guard, used both to scrub
+// the subject list and to fail the QA check.
+const CARBS = /\b(bread|toast|baguette|bun|roll|pasta|noodle|spaghetti|rice|grain|cereal|oat|cake|pastry|cookie|biscuit|muffin|bagel|pancake|waffle|pizza|potato|fries|chip|crisp|donut|doughnut|croissant|pretzel|cracker|sugar|candy|chocolate|dessert)\b/i;
 
-// Candidate archetypes per article type. Each list cycles by ROTATION (an even
-// per-type counter), so consecutive articles of a type never repeat a look —
-// food types rotate through four visually distinct treatments.
-const TYPE_ART = {
-  amount: ['metaphor', 'macro', 'stilllife'],
-  foodlist: ['flatlay', 'botanical', 'macro', 'stilllife'],
-  singlefood: ['botanical', 'macro', 'stilllife', 'flatlay'],
-  concept: ['metaphor', 'macro', 'metaphor', 'lifestyle'], // mostly idea-driven metaphors
-};
+// Safe, unambiguous high-protein foods to fall back on when an article has no
+// food list of its own (most "amount" and "concept" posts), so they still get an
+// on-topic, never-carby picture.
+const CANON = ['eggs', 'grilled chicken breast', 'Greek yogurt', 'cooked lentils', 'salmon fillet'];
 
-// idx = how many of this type were already published (even rotation).
-export function chooseArt(type, idx) {
-  const cands = TYPE_ART[type] || ['macro', 'metaphor', 'flatlay', 'stilllife'];
-  return cands[((idx % cands.length) + cands.length) % cands.length];
-}
-
-function imagePrompt(topic, body, artKey) {
-  const art = ART[artKey];
-  let subject;
-  if (artKey === 'metaphor') {
-    // Idea-driven, never a food spread — even if the stored subject named foods.
-    const hint =
-      body.imageSubject && !/\b(plate|bowl|spread|dish|platter|board)\b/i.test(body.imageSubject)
-        ? ` Hint: ${body.imageSubject}.`
-        : '';
-    subject = `invent a single clever visual metaphor for the idea of "${topic.title}".${hint} Absolutely not a plate or spread of food`;
-  } else {
-    subject = body.imageSubject || `the foods central to "${topic.title}"`;
+// Decide exactly which foods the illustration shows, drawn from the article body.
+function subjectFoods(body, type) {
+  const clean = (arr) =>
+    [...new Set(arr.map((s) => String(s || '').trim()).filter(Boolean))].filter(
+      (s) => !CARBS.test(s)
+    );
+  if (type === 'foodlist') {
+    const f = clean((body.foods || []).map((x) => x.name)).slice(0, 6);
+    if (f.length >= 2) return f;
   }
-  return `${IMG_BASE} ${art} Subject: ${subject}. Landscape 16:9.`;
+  if (type === 'singlefood') {
+    const one = clean([body.imageSubject, ...(body.foods || []).map((x) => x.name)]);
+    if (one.length) return one.slice(0, 1);
+  }
+  // amount / concept / any thin list: writer's named foods, else the safe canon.
+  const sub = clean(String(body.imageSubject || '').split(/,|;|\band\b/));
+  return (sub.length >= 2 ? sub : CANON).slice(0, 5);
 }
 
-export async function makeImage(topic, body, artKey) {
+const IMG_STYLE =
+  'A soft, elegant editorial still-life illustration in ONE consistent style: gentle gouache and colored-pencil painting, muted natural palette (warm cream, sage, clay, soft ochre), delicate visible paper grain, calm even daylight, generous negative space. Grounded and realistic in proportion and color so the foods look like real food, but clearly a tasteful hand painting — NOT a photograph, NOT a 3D render, NOT flat vector, NOT a cartoon. Simple, uncluttered: the foods resting together on a plain pale surface. Every food must read unmistakably as exactly what it is; meats look like real meat (visible grill marks and grain) and must NEVER look like a loaf, bun, or baked dough; nothing in the picture may look bready, baked, or dough-like. NO text, letters, words, numbers, labels, logos, signage or packaging of any kind — foods are loose or in plain unmarked bowls. No people, no faces, no hands.';
+
+// Disambiguate the foods nano-banana most often mis-paints (whole chicken breast
+// keeps rendering as a golden braided loaf), so the model draws meat, not bread.
+function clarifyFood(name) {
+  if (/chicken breast/i.test(name))
+    return 'sliced cooked chicken breast (clearly poultry meat with grill marks, never a loaf or bread)';
+  if (/\bbeef\b|steak/i.test(name)) return `${name} (clearly a cut of red meat)`;
+  return name;
+}
+
+function imagePrompt(foods) {
+  return `${IMG_STYLE}
+Show ONLY these foods, accurate and clearly recognizable: ${foods.map(clarifyFood).join(', ')}.
+Do NOT add any other food. Absolutely no bread, loaf, bun, baguette, toast, pastry, pasta, rice, grains, cereal, cake, cookies, potatoes, or any high-carb or sugary item unless it appears in that exact list.
+Landscape 16:9, centered, with soft empty space around the food.`;
+}
+
+// Vision QA: reject stray text, off-list/carby foods, or faces. Non-fatal — if
+// the checker can't run we accept the image rather than block publishing.
+async function verifyImage(buf, foods) {
+  try {
+    if (!process.env.GEMINI_API_KEY) return { ok: true };
+    const res = await ai().models.generateContent({
+      model: TEXT_MODEL, // gemini-2.5-flash is multimodal; cheaper than the image model
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            { inlineData: { mimeType: 'image/png', data: buf.toString('base64') } },
+            {
+              text: `Check this illustration for a protein-nutrition article. Allowed foods: ${foods.join(', ')}. Reply with ONLY JSON {"ok":boolean,"reason":"<=10 words"}. Set ok=false if ANY is true: (a) any visible text, letters, words, numbers, logos, or packaging labels; (b) ANYTHING that looks like bread, a loaf, a bun, a baguette, toast, pastry, or baked dough appears anywhere — even if it was meant to be meat or chicken; (c) it shows pasta, rice, grains, cereal, cake, cookies, potatoes, or other high-carb/sugary food NOT in the allowed list; (d) a human face or hands appear; (e) any allowed food is not clearly recognizable as itself. Be strict: if a shape is ambiguous between meat and bread, treat it as bread and fail it.`,
+            },
+          ],
+        },
+      ],
+      config: { responseMimeType: 'application/json', temperature: 0 },
+    });
+    const v = parseJson(res.text || '');
+    if (v && typeof v.ok === 'boolean') return v;
+  } catch (e) {
+    console.log('verify skipped:', e.message);
+  }
+  return { ok: true };
+}
+
+export async function makeImage(topic, body, type) {
+  const foods = subjectFoods(body, type);
   try {
     if (!process.env.GEMINI_API_KEY) return null;
-    const res = await ai().models.generateContent({
-      model: IMAGE_MODEL,
-      contents: [{ role: 'user', parts: [{ text: imagePrompt(topic, body, artKey) }] }],
-      config: { imageConfig: { aspectRatio: '16:9' } },
-    });
-    const parts = res?.candidates?.[0]?.content?.parts || [];
-    const img = parts.find((p) => p.inlineData?.data);
-    if (!img) return null;
-    return Buffer.from(img.inlineData.data, 'base64');
+    let last = null;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      const res = await ai().models.generateContent({
+        model: IMAGE_MODEL,
+        contents: [{ role: 'user', parts: [{ text: imagePrompt(foods) }] }],
+        config: { imageConfig: { aspectRatio: '16:9' } },
+      });
+      const parts = res?.candidates?.[0]?.content?.parts || [];
+      const img = parts.find((p) => p.inlineData?.data);
+      if (!img) continue;
+      last = Buffer.from(img.inlineData.data, 'base64');
+      const v = await verifyImage(last, foods);
+      if (v.ok) return last;
+      console.log(`image QA reject (attempt ${attempt}/3): ${v.reason}`);
+    }
+    return last; // best effort after retries rather than no image at all
   } catch (e) {
     console.log('image skipped:', e.message);
     return null;
@@ -273,10 +309,7 @@ export const run = async () => {
   const { body, flags } = await review(topic, draft);
   body.type = type;
 
-  // Even rotation: pick the art direction by how many of this type are already live.
-  const idx = q.filter((t) => t.status === 'published' && inferType(t.title, t.type) === type).length;
-  const artKey = chooseArt(type, idx);
-  const png = await makeImage(topic, body, artKey);
+  const png = await makeImage(topic, body, type);
   if (png) await setOg(s, topic.slug, png);
 
   await setBody(s, topic.slug, body);
@@ -286,7 +319,7 @@ export const run = async () => {
   await setQueue(s, q);
   await notify(topic, flags);
 
-  console.log(`PUBLISH ok: ${topic.slug} [${type}/${artKey}] (image: ${png ? 'yes' : 'fallback'})`);
+  console.log(`PUBLISH ok: ${topic.slug} [${type}] (image: ${png ? 'yes' : 'fallback'})`);
   return { statusCode: 200, body: `published ${topic.slug}` };
 };
 

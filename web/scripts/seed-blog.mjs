@@ -38,7 +38,7 @@ const N = (() => {
 const { store, setQueue, getQueue, getBody, setOg, published, inferType } = await import(
   '../src/lib/blog.mjs'
 );
-const { run, makeImage, chooseArt } = await import('../netlify/functions/publish-blog.mjs');
+const { run, makeImage } = await import('../netlify/functions/publish-blog.mjs');
 
 // --reimage: regenerate ONLY the hero images for already-published posts (cheap,
 // no text regen) — use after changing the image art direction.
@@ -49,18 +49,14 @@ if (REIMAGE) {
   }
   const s = await store();
   const posts = published(await getQueue(s));
-  const counts = {};
   for (const t of posts) {
     const body = await getBody(s, t.slug);
     if (!body) continue;
     const type = inferType(t.title, t.type);
-    const idx = counts[type] || 0;
-    counts[type] = idx + 1;
-    const artKey = chooseArt(type, idx);
-    const png = await makeImage(t, body, artKey);
+    const png = await makeImage(t, body, type);
     if (png) {
       await setOg(s, t.slug, png);
-      console.log(`reimaged ${t.slug} [${type}/${artKey}]`);
+      console.log(`reimaged ${t.slug} [${type}]`);
     } else {
       console.log(`SKIP ${t.slug} (no image)`);
     }

@@ -34,23 +34,17 @@ const jsonLd = JSON.stringify({
     <section class="card" aria-label="Protein check tool">
       <!-- STATE 1: intake -->
       <div id="intake" class="intake">
-        <label class="drop" id="drop" for="fileInput">
+        <div class="drop" id="drop">
           <span class="drop-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3.5"/></svg>
+            <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3.5"/></svg>
           </span>
-          <span class="drop-text">Add a meal photo</span>
-          <span class="drop-hint" id="dropHint">Drag &amp; drop, or choose a file</span>
-        </label>
-
-        <div class="actions">
-          <button id="btnCamera" class="btn primary" type="button" hidden>
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3.5"/></svg>
-            Take photo
+          <span class="drop-text" id="dropText">Snap your meal</span>
+          <button id="btnPrimary" class="btn primary big" type="button">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"/><circle cx="12" cy="13" r="3.5"/></svg>
+            <span id="primaryLabel">Take a photo</span>
           </button>
-          <button id="btnUpload" class="btn" type="button">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="M12 3v13"/><path d="m7 8 5-5 5 5"/></svg>
-            <span id="uploadLabel">Upload photo</span>
-          </button>
+          <button id="btnSecondary" class="linkbtn" type="button"><span id="secondaryLabel">Upload from your library</span></button>
+          <span class="drop-hint" id="dropHint">Free · no signup · your photo is never stored</span>
         </div>
 
         <input id="camInput" type="file" accept="image/*" capture="environment" hidden />
@@ -137,13 +131,19 @@ const jsonLd = JSON.stringify({
       window.matchMedia('(hover: none) and (pointer: coarse)').matches ||
       /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
+    // Mobile-first: the big primary button is the obvious action. On phones it
+    // opens the camera; on desktop it opens the file picker (and drag & drop works).
     if (isMobile) {
-      $('btnCamera').hidden = false;
-      $('uploadLabel').textContent = 'Upload photo';
-      $('dropHint').textContent = 'Take a new photo or pick one from your library';
+      $('dropText').textContent = 'Snap your meal';
+      $('primaryLabel').textContent = 'Take a photo of your meal';
+      $('secondaryLabel').textContent = 'Upload from your library';
+      $('btnSecondary').hidden = false;
+      $('dropHint').textContent = 'Free · no signup · your photo is never stored';
     } else {
-      $('uploadLabel').textContent = 'Upload a photo';
-      $('dropHint').textContent = 'Drag & drop, or upload a photo';
+      $('dropText').textContent = 'Add a meal photo';
+      $('primaryLabel').textContent = 'Upload a meal photo';
+      $('btnSecondary').hidden = true;
+      $('dropHint').textContent = 'Drag & drop, or click to choose a file';
     }
 
     // Email capture only works against the real API (not the function-only fallback).
@@ -312,13 +312,20 @@ const jsonLd = JSON.stringify({
 
     camInput.addEventListener('change', () => handleFile(camInput.files?.[0]));
     fileInput.addEventListener('change', () => handleFile(fileInput.files?.[0]));
-    $('btnCamera').addEventListener('click', () => camInput.click());
-    $('btnUpload').addEventListener('click', () => fileInput.click());
+    // Primary: camera on mobile, file picker on desktop. Secondary: library.
+    $('btnPrimary').addEventListener('click', () => (isMobile ? camInput : fileInput).click());
+    $('btnSecondary').addEventListener('click', () => fileInput.click());
     $('again').addEventListener('click', reset);
     $('retry').addEventListener('click', reset);
 
-    // Desktop drag & drop.
+    // Desktop: clicking anywhere in the box (not the buttons) opens the picker.
     const drop = $('drop');
+    if (!isMobile) {
+      drop.addEventListener('click', (e) => {
+        if (!e.target.closest('button')) fileInput.click();
+      });
+      drop.style.cursor = 'pointer';
+    }
     ['dragenter', 'dragover'].forEach((ev) =>
       drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add('over'); }));
     ['dragleave', 'drop'].forEach((ev) =>
@@ -340,21 +347,23 @@ const jsonLd = JSON.stringify({
 
     .card { background:var(--bg-card); border:1px solid var(--line); border-radius:var(--radius-lg); padding:18px; box-shadow:var(--shadow); }
 
-    /* intake */
-    .drop { display:flex; flex-direction:column; align-items:center; gap:7px; border:2px dashed #cdd5cc; border-radius:var(--radius); padding:30px 16px; text-align:center; cursor:pointer; transition:border-color .15s, background .15s; }
-    .drop:hover, .drop.over { border-color:var(--accent); background:var(--accent-soft); }
+    /* intake — mobile-first: one big obvious action */
+    .drop { display:flex; flex-direction:column; align-items:center; gap:6px; border:2px dashed #cdd5cc; border-radius:var(--radius); padding:30px 18px 26px; text-align:center; transition:border-color .15s, background .15s; }
+    .drop.over { border-color:var(--accent); background:var(--accent-soft); }
     .drop-icon { color:var(--accent); display:flex; }
-    .drop-text { font-weight:700; font-size:18px; }
-    .drop-hint { color:var(--ink-muted); font-size:13.5px; }
-    .actions { display:flex; gap:10px; margin-top:14px; }
-    .actions .btn { flex:1; }
+    .drop-text { font-weight:800; font-size:20px; letter-spacing:-.01em; }
+    .drop-hint { color:var(--ink-muted); font-size:13px; margin-top:12px; }
 
-    .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; border:1px solid var(--line); background:var(--bg-card); color:var(--ink); border-radius:12px; padding:13px 18px; font:inherit; font-weight:700; font-size:16px; cursor:pointer; transition:border-color .15s, background .15s, color .15s; min-height:48px; }
+    .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; border:1px solid var(--line); background:var(--bg-card); color:var(--ink); border-radius:12px; padding:13px 18px; font:inherit; font-weight:700; font-size:16px; cursor:pointer; transition:transform .12s, border-color .15s, background .15s, color .15s; min-height:48px; }
     .btn:hover { border-color:var(--accent); color:var(--accent); }
     .btn.primary { background:var(--accent); border-color:var(--accent); color:#fff; }
     .btn.primary:hover { background:var(--accent-ink); border-color:var(--accent-ink); color:#fff; }
+    .btn.primary:active { transform:scale(.985); }
+    .btn.big { width:100%; min-height:58px; font-size:17.5px; border-radius:14px; margin-top:14px; box-shadow:0 8px 20px rgba(21,128,61,.22); }
     .btn.wide { width:100%; margin-top:4px; }
     .btn svg { flex:none; }
+    .linkbtn { margin-top:12px; background:none; border:none; color:var(--accent-ink); font:inherit; font-weight:600; font-size:14.5px; text-decoration:underline; text-underline-offset:2px; cursor:pointer; padding:6px; min-height:36px; }
+    .linkbtn:hover { color:var(--accent); }
 
     /* loading */
     .loading { text-align:center; }

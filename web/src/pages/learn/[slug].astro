@@ -22,19 +22,21 @@ const q = await getQueue(s);
 const topic = published(q).find((t) => t.slug === slug);
 const body = topic ? await getBody(s, slug) : null;
 
-if (!topic || !body) {
-  // Render a clean, noindexed 404 rather than throwing.
-  Astro.response.status = 404;
-}
+if (!topic || !body) Astro.response.status = 404;
 
 const url = `${SITE}/learn/${slug}`;
+const IMG_V = 3; // bump to bust the OG-image CDN cache after a re-image pass
+const ogPath = `/learn/og/${slug}.png?v=${IMG_V}`;
 const siblings = topic ? siblingsFor(topic, q) : [];
+const paras = (t) => String(t || '').split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
 
-const jsonLd = topic && body
-  ? [breadcrumbLd(body.crumbTail, url), articleLd(topic, body, url), howToLd(topic, body), faqLd(body)]
-      .map((o) => JSON.stringify(o))
-      .join('</script>\n<script type="application/ld+json">')
-  : undefined;
+let jsonLd;
+if (topic && body) {
+  const blocks = [breadcrumbLd(body.crumbTail, url), articleLd(topic, body, url)];
+  if (Array.isArray(body.steps) && body.steps.length) blocks.push(howToLd(topic, body));
+  if (Array.isArray(body.faqs) && body.faqs.length) blocks.push(faqLd(body));
+  jsonLd = blocks.map((o) => JSON.stringify(o)).join('</script>\n<script type="application/ld+json">');
+}
 
 Astro.response.headers.set(
   'Netlify-CDN-Cache-Control',
@@ -47,7 +49,7 @@ Astro.response.headers.set(
     description={body.metaDescription}
     canonical={`/learn/${slug}`}
     ogType="article"
-    ogImage={`/learn/og/${slug}.png`}
+    ogImage={ogPath}
     jsonLd={jsonLd}
   >
     <main id="main" class="prose">
@@ -55,52 +57,50 @@ Astro.response.headers.set(
       <h1>{topic.title}</h1>
       <p class="updated">Updated <b>{monthYear()}</b> · ~2-minute read · by {AUTHOR.name}</p>
 
-      <img class="hero" src={`/learn/og/${slug}.png`} width="1200" height="630" loading="eager" alt={`${topic.title} — illustrative high-protein meal`} />
+      <img class="hero" src={ogPath} width="1200" height="630" loading="eager" alt={`Illustration for ${topic.title}`} />
 
       <div class="answer">
-        <p>{body.answer}</p>
+        {paras(body.answer).map((p) => <p>{p}</p>)}
       </div>
 
-      {Array.isArray(body.whoFor) && body.whoFor.length > 0 && (
-        <>
-          <h2>Who this is for</h2>
-          <ul>{body.whoFor.map((x) => <li>{x}</li>)}</ul>
-        </>
-      )}
-
-      {body.whyItMatters && (
-        <>
-          <h2>Why it matters</h2>
-          <p>{body.whyItMatters}</p>
-        </>
-      )}
-
       {Array.isArray(body.quickNumbers) && body.quickNumbers.length > 0 && (
-        <>
-          <h2>The numbers</h2>
-          <ul class="quick">
-            {body.quickNumbers.map((n) => (
-              <li><span class="qv">{n.value}</span><span class="ql">{n.label}</span></li>
-            ))}
-          </ul>
-        </>
+        <ul class="quick">
+          {body.quickNumbers.map((n) => (
+            <li><span class="qv">{n.value}</span><span class="ql">{n.label}</span></li>
+          ))}
+        </ul>
       )}
 
-      <h2>What to do</h2>
-      <ol>
-        {body.theMove.map((m) => (
-          <li><strong>{m.lead}.</strong> {m.text}</li>
-        ))}
-      </ol>
-      {body.cue && <p class="cue-line">One line to remember: <em>{body.cue}</em></p>}
-
-      {body.doNow && (
-        <>
-          <h2>Do this now</h2>
-          <p>{body.doNow.intro}</p>
-          <ul>{(body.doNow.steps || []).map((x) => <li>{x}</li>)}</ul>
-        </>
+      {Array.isArray(body.foods) && body.foods.length > 0 && (
+        <ul class="foods">
+          {body.foods.map((f) => (
+            <li>
+              <span class="f-main">
+                <span class="f-name">{f.name}</span>
+                {f.serving && <span class="f-serving">{f.serving}</span>}
+              </span>
+              <span class="f-protein">{f.protein}</span>
+            </li>
+          ))}
+        </ul>
       )}
+
+      {Array.isArray(body.sections) && body.sections.map((sec) => (
+        <>
+          <h2>{sec.h2}</h2>
+          {paras(sec.body).map((p) => <p>{p}</p>)}
+        </>
+      ))}
+
+      {Array.isArray(body.steps) && body.steps.length > 0 && (
+        <ol>
+          {body.steps.map((m) => (
+            <li><strong>{m.lead}.</strong> {m.text}</li>
+          ))}
+        </ol>
+      )}
+
+      {body.cue && <p class="cue-line">Remember: <em>{body.cue}</em></p>}
 
       {siblings.length > 0 && (
         <>
@@ -113,14 +113,19 @@ Astro.response.headers.set(
         </>
       )}
 
-      <h2>Check your plate in seconds</h2>
-      <p>Not sure how much protein is actually on your plate? Snap a photo and the free <a href="/">Protein Check</a> estimates the protein and leucine in seconds — no signup.</p>
-      <p><a class="cta-tool" href="/">Check my meal →</a></p>
+      <div class="cta-box">
+        <p>Want to know how much protein is actually on <em>your</em> plate? Snap a photo and the free <strong>Protein Check</strong> estimates the protein and leucine in seconds — no signup.</p>
+        <p><a class="cta-tool" href="/">Check my meal →</a></p>
+      </div>
 
-      {body.faqQ && (
+      {Array.isArray(body.faqs) && body.faqs.length > 0 && (
         <>
-          <h2>{body.faqQ}</h2>
-          <p>{body.faqA}</p>
+          {body.faqs.map((f) => (
+            <>
+              <h2>{f.q}</h2>
+              {paras(f.a).map((p) => <p>{p}</p>)}
+            </>
+          ))}
         </>
       )}
 
@@ -130,11 +135,7 @@ Astro.response.headers.set(
     </main>
   </Layout>
 ) : (
-  <Layout
-    title="Guide not found — Protein Check"
-    description="That guide doesn't exist yet."
-    noindex={true}
-  >
+  <Layout title="Guide not found — Protein Check" description="That guide doesn't exist yet." noindex={true}>
     <main id="main" class="prose">
       <p class="crumb"><a href="/">Protein Check</a><span class="sep">/</span>learn</p>
       <h1>Guide not found</h1>

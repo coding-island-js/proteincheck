@@ -29,13 +29,45 @@ loadEnv(path.join(ROOT, '..', '..', '.env.master'));
 
 const ARGV = process.argv.slice(2);
 const FRESH = ARGV.includes('--fresh'); // wipe the whole blog store before seeding
+const REIMAGE = ARGV.includes('--reimage'); // only regenerate images for published posts
 const N = (() => {
   const num = ARGV.find((a) => /^\d+$/.test(a));
   return num != null ? parseInt(num, 10) : 6;
 })();
 
-const { store, setQueue, getQueue, published } = await import('../src/lib/blog.mjs');
-const { run } = await import('../netlify/functions/publish-blog.mjs');
+const { store, setQueue, getQueue, getBody, setOg, published, inferType } = await import(
+  '../src/lib/blog.mjs'
+);
+const { run, makeImage, chooseArt } = await import('../netlify/functions/publish-blog.mjs');
+
+// --reimage: regenerate ONLY the hero images for already-published posts (cheap,
+// no text regen) — use after changing the image art direction.
+if (REIMAGE) {
+  if (!process.env.GEMINI_API_KEY) {
+    console.error('Missing GEMINI_API_KEY.');
+    process.exit(1);
+  }
+  const s = await store();
+  const posts = published(await getQueue(s));
+  const counts = {};
+  for (const t of posts) {
+    const body = await getBody(s, t.slug);
+    if (!body) continue;
+    const type = inferType(t.title, t.type);
+    const idx = counts[type] || 0;
+    counts[type] = idx + 1;
+    const artKey = chooseArt(type, idx);
+    const png = await makeImage(t, body, artKey);
+    if (png) {
+      await setOg(s, t.slug, png);
+      console.log(`reimaged ${t.slug} [${type}/${artKey}]`);
+    } else {
+      console.log(`SKIP ${t.slug} (no image)`);
+    }
+  }
+  console.log('Done reimaging.');
+  process.exit(0);
+}
 
 if (!process.env.NETLIFY_API_TOKEN && !process.env.NETLIFY_AUTH_TOKEN) {
   console.error('Missing NETLIFY_API_TOKEN / NETLIFY_AUTH_TOKEN — needed to write prod Blobs.');

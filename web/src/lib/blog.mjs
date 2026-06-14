@@ -111,7 +111,7 @@ export function howToLd(topic, body) {
     '@type': 'HowTo',
     name: topic.title,
     description: body.metaDescription,
-    step: (body.theMove || []).map((s, i) => ({
+    step: (body.steps || []).map((s, i) => ({
       '@type': 'HowToStep',
       position: i + 1,
       name: s.lead,
@@ -123,14 +123,32 @@ export function faqLd(body) {
   return {
     '@context': 'https://schema.org',
     '@type': 'FAQPage',
-    mainEntity: [
-      {
-        '@type': 'Question',
-        name: body.faqQ,
-        acceptedAnswer: { '@type': 'Answer', text: body.faqA },
-      },
-    ],
+    mainEntity: (body.faqs || []).map((f) => ({
+      '@type': 'Question',
+      name: f.q,
+      acceptedAnswer: { '@type': 'Answer', text: f.a },
+    })),
   };
+}
+
+// Article archetype, inferred from the title (overridable via topic.type).
+// Drives both the writer's structure and the article layout.
+//   amount     -> "how much protein..." : lead with the number + how to hit it
+//   foodlist   -> "best/highest/cheapest ... foods/sources/snacks" : a ranked food list
+//   singlefood -> "how much protein in X / is X high in protein" : serving-size table
+//   concept    -> everything else : prose explainer
+export function inferType(title, override) {
+  if (override) return override;
+  const t = String(title).toLowerCase();
+  if (/protein (is |are )?in\b/.test(t) || /\bis .+ high in protein\b/.test(t)) return 'singlefood';
+  if (
+    /\b(foods|sources|snacks)\b/.test(t) ||
+    /(highest|cheapest|best|top|lean)\b.*\bprotein\b/.test(t) ||
+    /\bbreakfast\b/.test(t)
+  )
+    return 'foodlist';
+  if (/how much protein/.test(t) || /how much .*need/.test(t)) return 'amount';
+  return 'concept';
 }
 export function collectionLd(q) {
   return {

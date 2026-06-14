@@ -14,8 +14,8 @@ export const GET: APIRoute = async ({ params, redirect }) => {
         status: 200,
         headers: {
           'Content-Type': 'image/png',
-          'Netlify-CDN-Cache-Control': 'public, s-maxage=604800, stale-while-revalidate=86400',
-          'Cache-Control': 'public, max-age=86400',
+          'Netlify-CDN-Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=86400',
+          'Cache-Control': 'public, max-age=3600',
         },
       });
     }

@@ -290,6 +290,7 @@
       "slug": "how-do-i-know-how-much-protein-is-in-my-meal",
       "cluster": "high-protein-foods",
       "fit": "M",
+      "type": "concept",
       "title": "How do I know how much protein is in my meal?",
       "intent": "how much protein in a meal / estimate protein / count protein in food",
       "anchor": "Eyeball the protein source: a palm-sized portion of meat or fish is roughly 25-30 g. Or snap a photo and let a tool estimate it.",

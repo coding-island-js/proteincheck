@@ -134,8 +134,22 @@ const ogImageUrl = ogImage ? (ogImage.startsWith('http') ? ogImage : `${SITE}${o
       .quick li { background:var(--bg-card); border:1px solid var(--line); border-radius:var(--radius-sm); padding:14px 16px; margin:0; }
       .quick .qv { display:block; font-size:24px; font-weight:800; color:var(--accent-ink); letter-spacing:-.02em; }
       .quick .ql { display:block; font-size:12.5px; color:var(--ink-muted); font-weight:600; text-transform:uppercase; letter-spacing:.04em; margin-top:3px; }
-      .cue-line { font-size:16.5px; color:var(--ink); }
+      .cue-line { font-size:16.5px; color:var(--ink); margin-top:18px; }
       .cue-line em { font-style:normal; font-weight:700; color:var(--accent-ink); }
+      /* food list (foodlist + singlefood articles) */
+      .foods { list-style:none; padding:0; margin:20px 0; border:1px solid var(--line); border-radius:var(--radius); overflow:hidden; background:var(--bg-card); }
+      .foods li { display:flex; align-items:center; justify-content:space-between; gap:14px; padding:13px 16px; margin:0; border-bottom:1px solid var(--line-soft); }
+      .foods li:last-child { border-bottom:none; }
+      .foods li:nth-child(odd) { background:color-mix(in srgb, var(--accent-soft) 35%, transparent); }
+      .f-main { display:flex; flex-direction:column; gap:1px; min-width:0; }
+      .f-name { font-weight:700; font-size:16px; color:var(--ink); }
+      .f-serving { font-size:13px; color:var(--ink-muted); }
+      .f-protein { font-weight:800; font-size:18px; color:var(--accent-ink); white-space:nowrap; letter-spacing:-.01em; }
+      /* CTA box */
+      .cta-box { margin:30px 0; padding:20px; background:var(--accent-soft); border:1px solid var(--line); border-radius:var(--radius); }
+      .cta-box p { color:var(--accent-ink); margin:0 0 12px; }
+      .cta-box p:last-child { margin:0; }
+      .cta-box em { font-style:italic; }
       .related { list-style:none; padding:0; margin:14px 0; }
       .related li { border-bottom:1px solid var(--line-soft); padding:12px 0; margin:0; }
       .related li:last-child { border-bottom:none; }

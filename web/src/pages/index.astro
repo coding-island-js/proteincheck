@@ -2,7 +2,7 @@
 import Layout from '../layouts/Layout.astro';
 const API = import.meta.env.PUBLIC_API_URL
   ? `${import.meta.env.PUBLIC_API_URL}/analyze`
-  : '/.netlify/functions/analyze';
+  : '/api/analyze';
 const SUBSCRIBE = import.meta.env.PUBLIC_API_URL
   ? `${import.meta.env.PUBLIC_API_URL}/subscribe`
   : '';

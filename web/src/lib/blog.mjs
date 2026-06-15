@@ -12,7 +12,7 @@
 export const SITE = 'https://proteincheck.withmagic.ai';
 export const SITE_NAME = 'Protein Check';
 export const SITE_ID = 'adf1181c-6d66-4f0b-8704-b4d9f71624c8';
-export const AUTHOR = { name: 'Coding Raj', url: 'https://codingraj.withmagic.ai' };
+export const AUTHOR = { name: 'Raj Lakhani', url: `${SITE}/about` };
 
 // Human label per cluster, shown as section headings on the /learn hub.
 export const CLUSTERS = {
@@ -30,6 +30,53 @@ export const esc = (s) =>
 export const today = () => new Date().toISOString().slice(0, 10);
 export const monthYear = () =>
   new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+// Honest, human date from a stored ISO date (e.g. "June 14, 2026"). No "today()"
+// fallbacks in the UI — we show the real publish/update date, not the render date.
+export const fmtDate = (iso) =>
+  iso
+    ? new Date(`${iso}T00:00:00Z`).toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+        timeZone: 'UTC',
+      })
+    : '';
+// Real reading time from the article body (~200 wpm), so "N min read" is honest.
+export function readMins(body) {
+  const text = [
+    body.answer,
+    ...(body.sections || []).map((s) => s.body),
+    ...(body.faqs || []).map((f) => f.a),
+    ...(body.foods || []).map((f) => `${f.name} ${f.serving || ''}`),
+  ]
+    .join(' ')
+    .trim();
+  return Math.max(1, Math.round(text.split(/\s+/).filter(Boolean).length / 200));
+}
+
+// Curated, hand-verified authoritative references (all return 200). Citing real
+// sources is both an E-E-A-T trust signal and the top measured lever for being
+// cited by AI answer engines — and using a fixed allowlist means the pipeline can
+// never hallucinate a fake study or dead URL.
+export const SOURCES = {
+  usda: {
+    label: 'USDA FoodData Central — protein values for foods',
+    url: 'https://fdc.nal.usda.gov/',
+  },
+  medline: {
+    label: 'MedlinePlus (U.S. National Library of Medicine) — Dietary proteins',
+    url: 'https://medlineplus.gov/dietaryproteins.html',
+  },
+  issn: {
+    label: 'International Society of Sports Nutrition — protein & exercise position stand',
+    url: 'https://jissn.biomedcentral.com/articles/10.1186/s12970-017-0177-8',
+  },
+};
+// Pick the 2 most relevant references for an article from its cluster.
+export function sourcesFor(topic) {
+  const food = ['high-protein-foods', 'plant-based', 'weight-loss'].includes(topic.cluster);
+  return food ? [SOURCES.usda, SOURCES.medline] : [SOURCES.issn, SOURCES.medline];
+}
 
 // ---- Netlify Blobs ----
 // In production on Netlify the runtime injects context, so getStore("blog") just
@@ -97,13 +144,36 @@ export function articleLd(topic, body, url) {
     '@type': 'Article',
     headline: topic.title,
     author: { '@type': 'Person', name: AUTHOR.name, url: AUTHOR.url },
-    publisher: { '@type': 'Organization', name: SITE_NAME, url: `${SITE}/` },
+    publisher: {
+      '@type': 'Organization',
+      name: SITE_NAME,
+      url: `${SITE}/`,
+      logo: { '@type': 'ImageObject', url: `${SITE}/og.png` },
+    },
     description: body.metaDescription,
     image: `${SITE}/learn/og/${topic.slug}.png`,
     url,
     datePublished: topic.published || today(),
-    dateModified: today(),
+    // Real modified date, not the render date — never claim "modified today" on a
+    // page that hasn't changed (misleading + risky structured data).
+    dateModified: topic.modified || topic.published || today(),
+    citation: sourcesFor(topic).map((s) => s.url),
   };
+}
+// Site-wide identity schema so engines recognize the brand as an entity (helps
+// classic rich results + AI source attribution). Rendered on every page.
+export function organizationLd() {
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: SITE_NAME,
+    url: `${SITE}/`,
+    logo: `${SITE}/og.png`,
+    sameAs: ['https://github.com/coding-island-js/proteincheck'],
+  };
+}
+export function websiteLd() {
+  return { '@context': 'https://schema.org', '@type': 'WebSite', name: SITE_NAME, url: `${SITE}/` };
 }
 export function howToLd(topic, body) {
   return {

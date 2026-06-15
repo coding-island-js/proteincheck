@@ -8,7 +8,9 @@ import {
   getBody,
   published,
   siblingsFor,
-  monthYear,
+  fmtDate,
+  readMins,
+  sourcesFor,
   AUTHOR,
   breadcrumbLd,
   articleLd,
@@ -55,7 +57,7 @@ Astro.response.headers.set(
     <main id="main" class="prose">
       <p class="crumb"><a href="/">Protein Check</a><span class="sep">/</span><a href="/learn">learn</a><span class="sep">/</span>{body.crumbTail}</p>
       <h1>{topic.title}</h1>
-      <p class="updated">Updated <b>{monthYear()}</b> · ~2-minute read · by {AUTHOR.name}</p>
+      <p class="updated">By <a href="/about">{AUTHOR.name}</a> · Published {fmtDate(topic.published)}{topic.modified && topic.modified !== topic.published ? ` · Updated ${fmtDate(topic.modified)}` : ''} · {readMins(body)} min read</p>
 
       <img class="hero" src={ogPath} width="1200" height="630" loading="eager" alt={`Illustration for ${topic.title}`} />
 
@@ -129,9 +131,16 @@ Astro.response.headers.set(
         </>
       )}
 
+      <h2 class="src-h">Sources</h2>
+      <ul class="sources">
+        {sourcesFor(topic).map((s) => (
+          <li><a href={s.url} target="_blank" rel="noopener nofollow">{s.label}</a></li>
+        ))}
+      </ul>
+
       <hr />
       <p class="soon"><a href="/learn">← all guides</a></p>
-      <p class="disclaimer">General information from a real person who builds nutrition tools — not medical or dietary advice. Numbers are estimates; talk to a professional for advice specific to you.</p>
+      <p class="disclaimer">Written by {AUTHOR.name}, who builds Protein Check. Researched with AI assistance and fact-checked against the public, authoritative sources listed above — see <a href="/about">how these guides are made</a>. General information, not medical or dietary advice. Numbers are estimates; talk to a professional for advice specific to you.</p>
     </main>
   </Layout>
 ) : (

@@ -8,10 +8,15 @@ export interface Props {
   ogType?: string;
   noindex?: boolean;
 }
+import { organizationLd, websiteLd } from '../lib/blog.mjs';
 const SITE = 'https://proteincheck.withmagic.ai';
 const { title, description, canonical, jsonLd, ogImage, ogType, noindex } = Astro.props;
 const canonicalUrl = canonical ? `${SITE}${canonical}` : SITE;
 const ogImageUrl = ogImage ? (ogImage.startsWith('http') ? ogImage : `${SITE}${ogImage}`) : `${SITE}/og.png`;
+// Site-wide entity schema on every page (brand + website).
+const siteLd = [organizationLd(), websiteLd()]
+  .map((o) => JSON.stringify(o))
+  .join('</script>\n<script type="application/ld+json">');
 ---
 <!doctype html>
 <html lang="en">
@@ -47,6 +52,7 @@ const ogImageUrl = ogImage ? (ogImage.startsWith('http') ? ogImage : `${SITE}${o
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
 
+    <script type="application/ld+json" set:html={siteLd} />
     {jsonLd && <script type="application/ld+json" set:html={jsonLd} />}
   </head>
   <body>
@@ -63,6 +69,7 @@ const ogImageUrl = ogImage ? (ogImage.startsWith('http') ? ogImage : `${SITE}${o
         </div>
         <nav class="foot-nav" aria-label="Footer">
           <a href="/learn">Guides</a>
+          <a href="/about">About</a>
           <a href="/privacy">Privacy</a>
           <a href="/terms">Terms</a>
           <a href="https://github.com/coding-island-js/proteincheck" rel="noopener">GitHub</a>
@@ -158,7 +165,15 @@ const ogImageUrl = ogImage ? (ogImage.startsWith('http') ? ogImage : `${SITE}${o
       .cta-tool { display:inline-flex; align-items:center; gap:8px; background:var(--accent); color:#fff; border-radius:12px; padding:13px 20px; font-weight:700; font-size:16px; text-decoration:none; }
       .cta-tool:hover { background:var(--accent-ink); color:#fff; }
       .prose hr { border:none; border-top:1px solid var(--line); margin:32px 0 16px; }
+      .prose .src-h { font-size:18px; margin-top:30px; }
+      .sources { list-style:none; padding:0; margin:10px 0 4px; }
+      .sources li { margin:8px 0; padding:0; border:none; }
+      .sources a { font-size:14.5px; color:var(--ink-soft); font-weight:600; text-decoration:none; }
+      .sources a:hover { color:var(--accent); text-decoration:underline; }
       .prose .disclaimer { color:var(--ink-muted); font-size:12.5px; line-height:1.55; }
+      /* about page */
+      .about-block { margin:26px 0; }
+      .about-block h2 { font-size:20px; margin:0 0 8px; }
       .prose .soon a { font-weight:600; text-decoration:none; }
       /* hub cards */
       .hub-group { margin:28px 0; }

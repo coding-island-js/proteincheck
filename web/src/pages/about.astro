@@ -1,0 +1,59 @@
+---
+import Layout from '../layouts/Layout.astro';
+import { SITE, SITE_NAME, AUTHOR } from '../lib/blog.mjs';
+
+const personLd = JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'AboutPage',
+  name: `About ${SITE_NAME}`,
+  url: `${SITE}/about`,
+  mainEntity: {
+    '@type': 'Person',
+    name: AUTHOR.name,
+    url: `${SITE}/about`,
+    sameAs: ['https://github.com/coding-island-js'],
+    knowsAbout: ['protein', 'leucine', 'nutrition', 'muscle protein synthesis'],
+  },
+});
+---
+<Layout
+  title={`About — ${SITE_NAME}`}
+  description="Who builds Protein Check, why it exists, and exactly how the protein guides are researched, AI-assisted, and fact-checked against authoritative public sources."
+  canonical="/about"
+  jsonLd={personLd}
+>
+  <main id="main" class="prose">
+    <p class="crumb"><a href="/">Protein Check</a><span class="sep">/</span>about</p>
+    <h1>About Protein Check</h1>
+    <p class="updated">By {AUTHOR.name}</p>
+
+    <div class="answer">
+      <p>Protein Check is a free tool that estimates the protein and leucine in a meal from a single photo — no signup, no app, and your photo is never stored. The guides here exist to answer the protein questions people actually ask, in plain English, with real numbers.</p>
+    </div>
+
+    <section class="about-block">
+      <h2>Who makes this</h2>
+      <p>I'm {AUTHOR.name}. I build small, focused software tools, and I made Protein Check because tracking protein well usually means tedious logging or guesswork. I'm not a doctor or a registered dietitian — so I don't pretend to be one. Instead, every guide is built on mainstream, well-established nutrition science and points you to the primary sources so you can check the numbers yourself.</p>
+    </section>
+
+    <section class="about-block">
+      <h2>How these guides are made</h2>
+      <p>Each guide is researched and drafted with AI assistance, then structured to answer one question directly in the first few sentences. Every key number and claim is kept to mainstream nutrition science and checked against authoritative public references — primarily:</p>
+      <ul>
+        <li><a href="https://medlineplus.gov/dietaryproteins.html" target="_blank" rel="noopener nofollow">MedlinePlus (U.S. National Library of Medicine)</a> for general protein nutrition</li>
+        <li><a href="https://fdc.nal.usda.gov/" target="_blank" rel="noopener nofollow">USDA FoodData Central</a> for the protein content of foods</li>
+        <li><a href="https://jissn.biomedcentral.com/articles/10.1186/s12970-017-0177-8" target="_blank" rel="noopener nofollow">The International Society of Sports Nutrition position stand on protein &amp; exercise</a> for muscle, leucine, and timing</li>
+      </ul>
+      <p>The relevant sources are listed at the bottom of every guide. We don't invent studies, statistics, or quotes — if a number isn't well-supported by sources like these, it doesn't go in.</p>
+    </section>
+
+    <section class="about-block">
+      <h2>Honest about the limits</h2>
+      <p>Protein Check gives estimates, not measurements, and the guides are general information — not medical or dietary advice. Your needs depend on your body, goals, and health, so talk to a doctor or registered dietitian for anything specific to you. Found something wrong? Tell me and I'll fix it — the project is <a href="https://github.com/coding-island-js/proteincheck" target="_blank" rel="noopener">open source on GitHub</a>.</p>
+    </section>
+
+    <hr />
+    <p class="soon"><a href="/learn">Browse the guides →</a></p>
+    <p class="soon"><a href="/">Check your meal's protein →</a></p>
+  </main>
+</Layout>

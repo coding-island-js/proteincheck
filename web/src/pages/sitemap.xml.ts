@@ -15,6 +15,7 @@ export const GET: APIRoute = async () => {
     { loc: `${SITE}/`, pri: '1.0' },
     { loc: `${SITE}/learn`, pri: '0.8' },
     ...posts.map((t) => ({ loc: `${SITE}/learn/${t.slug}`, pri: '0.7', lastmod: t.published })),
+    { loc: `${SITE}/about`, pri: '0.5' },
     { loc: `${SITE}/privacy`, pri: '0.3' },
     { loc: `${SITE}/terms`, pri: '0.3' },
   ];

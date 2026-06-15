@@ -13,16 +13,17 @@ import Layout from '../layouts/Layout.astro';
 
     <div class="tldr">
       <strong>The short version:</strong> No account, no tracking profile. Your meal photo is sent
-      to Google's Gemini API to be analyzed and is <strong>not stored by us</strong>. We keep only the
-      anonymous nutrition estimate (grams of protein and leucine, item names) to understand how the
-      tool is used and to make it better.
+      to Google's Gemini API to be analyzed and is <strong>not stored by us</strong>. We keep only an
+      anonymous, aggregate tally of the nutrition estimates (such as grams of protein and leucine) to
+      understand how the tool is used, make it better, and publish anonymous statistics — never tied to you.
     </div>
 
     <h2>What we collect</h2>
     <p>When you analyze a meal, we receive the photo you choose, resized in your browser before it
       leaves your device. We send it to the Google Gemini vision API, which returns an estimate. We
-      then store the <em>derived estimate</em> only: total protein, total leucine, the list of detected
-      items, and a short verdict. We do not store the photo itself.</p>
+      then keep an <em>anonymous, aggregate</em> record of the derived estimate only — combined totals like
+      grams of protein and leucine across all meals, not a per-meal log. We do not store the photo itself,
+      and the aggregate is not linked to any person.</p>
 
     <h2>What we do not collect</h2>
     <ul>
@@ -33,7 +34,7 @@ import Layout from '../layouts/Layout.astro';
 
     <h2>Third parties</h2>
     <p>Photos are processed by <a href="https://ai.google.dev/" rel="noopener">Google's Gemini API</a>
-      under Google's terms. The site is hosted on Netlify and the API on Railway, which process
+      under Google's terms. The site and its API run on Netlify, which processes
       standard request logs (such as IP address and timestamp) to operate the service.</p>
 
     <h2>Your data</h2>

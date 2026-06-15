@@ -1,4 +1,5 @@
 import { GoogleGenAI } from '@google/genai';
+import { recordCheck } from '../../src/lib/stats.mjs';
 
 const PROMPT = `You are a nutrition expert. You are shown ONE photo of food or a meal. Estimate the
 protein content.
@@ -45,7 +46,17 @@ export const handler = async (event) => {
       contents: [{ role: 'user', parts: [{ text: PROMPT }, { inlineData: { mimeType: mime, data } }] }],
       config: { responseMimeType: 'application/json', temperature: 0.2 },
     });
-    return json(200, parseJson(res.text || ''));
+    const result = parseJson(res.text || '');
+    // Fold into the anonymous aggregate (no photo, no per-user data). Guarded so
+    // a stats hiccup can never block the user's result.
+    try {
+      await recordCheck({
+        protein: result.totalProtein,
+        leucine: result.totalLeucine,
+        items: Array.isArray(result.items) ? result.items.length : 0,
+      });
+    } catch {}
+    return json(200, result);
   } catch (e) {
     return json(500, { error: 'analysis_failed', detail: String(e?.message || e) });
   }
